@@ -1,0 +1,6 @@
+% rotation matrices
+function S = rotx_sym(alph)
+    S = [1 0 0; ...
+        0 cos(alph) -sin(alph);...
+        0 sin(alph) cos(alph)];
+end
