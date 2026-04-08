@@ -1,0 +1,27 @@
+classdef Trajectory
+    properties (SetAccess = protected)
+        dT
+        t0
+    end
+
+    methods
+        function obj = InputTrajectory(dT, t0)
+            if nargin < 2
+                t0 = 0;
+            end
+
+            obj.dT = dT;
+            obj.t0 = t0;
+        end
+
+
+        function t = getTime(obj, k)
+            t = obj.t0 + (k-1)*obj.dT;
+        end
+
+
+        function T = timeGrid(obj)
+            T = obj.t0 + (0:obj.length()-1)'*obj.dT;
+        end
+    end
+end

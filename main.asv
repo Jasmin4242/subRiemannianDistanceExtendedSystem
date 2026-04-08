@@ -1,0 +1,46 @@
+clear all;
+close all;
+
+addpath(genpath(pwd));
+
+dT = 0.05;
+
+% DIANA
+robot = Robot('DIANA');
+%functions
+kin = robot.getKinematics();
+dyn = robot.getDynamics();
+nx = robot.stateDimension();
+nu = robot.inputDimension();
+
+
+% INPUT TRAJECTORY
+u = InputTrajectory(dT, [0.1*ones(10,1) 0.2*ones(10,1)]);
+%functions
+u_1 = u.getInputk(1);
+u_vals = u.getInput();
+N = u.length();
+t_line = u.getTime();
+t = u.getTimek(1);
+
+
+        function N = length(obj)
+            N = size(obj.U,1);
+        end
+
+        function t = getTimek(obj, k)
+            t = obj.t0 + (k-1)*obj.dT;
+        end
+
+        function t = getTime(obj)
+            k = 1:1:obj.length();
+            t = obj.t0 + (k-1)*obj.dT;
+        end
+
+        function nu = inputDimension(obj)
+            nu = size(obj.U,2);
+        end
+
+        function T = timeGrid(obj)
+            T = obj.t0 + (0:obj.length()-1)'*obj.dT;
+        end
