@@ -40,7 +40,5 @@ classdef Trajectoryu < Trajectory
         function nu = inputDimension(obj)
             nu = size(obj.U,2);
         end
-
-
     end
 end

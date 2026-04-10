@@ -1,0 +1,111 @@
+classdef Visualizer
+    properties (SetAccess = private)
+        % System   % für später, falls Roboter z.B. gezeichnet werden soll
+    end
+
+    methods
+        %% Konstruktor
+        % function obj = Visualizer(system)
+            % if nargin < 1
+            %     system = [];
+            % end
+            % obj.System = system;
+        % end
+
+        % Zustände plotten
+        function plotStates(obj, xTraj)
+            T = xTraj.timeGrid();
+            X = xTraj.getState();
+            nx = xTraj.stateDimension();
+
+            figure();
+            for j = 1:nx
+                subplot(nx,1,j);
+                plot(T,X(:,j));
+                xlabel('t');
+                ylabel(strcat('x',num2str(j)));
+                grid on;
+            end  
+            sgtitle('state trajectories');
+        end
+
+        % Inputs plotten
+        function plotInputs(obj, uTraj)
+            T = uTraj.timeGrid();
+            U = uTraj.getInput();
+            nu = uTraj.inputDimension();
+
+            figure();
+            for j = 1:nu
+                subplot(nu,1,j);
+                plot(T,U(:,j));
+                xlabel('t');
+                ylabel(strcat('u',num2str(j)));
+                grid on;
+            end  
+            sgtitle('input trajectories');
+        end
+
+       
+        % XY-diagram plotten
+        function plotPath(obj, xTraj, idxX, idxY)
+            if nargin < 3
+                idxX = 1;
+                idxY = 2;
+            end
+
+            X = xTraj.getState();
+
+            figure;
+            plot(X(:,idxX), X(:,idxY), 'LineWidth', 2);
+            grid on;
+            axis equal;
+            xlabel(sprintf('x_%d', idxX));
+            ylabel(sprintf('x_%d', idxY));
+            title('x-y diagram');
+        end
+
+        %% =========================
+        %% einfache Animation
+        %% =========================
+        function animate(obj, xTraj, step)
+            if nargin < 3
+                step = 1;
+            end
+
+            X = xTraj.getState();
+
+            figure;
+            hold on;
+            grid on;
+            axis equal;
+            xlim()
+
+            for k = 1:step:size(X,1)
+                cla;
+
+                x = X(k,1);
+                y = X(k,2);
+
+                plot(x, y, 'bo', 'MarkerSize', 8, 'LineWidth', 2);
+                plot(X(1:k,1), X(1:k,2), 'b-');
+
+                xlabel('x');
+                ylabel('y');
+                title(sprintf('Step %d', k));
+
+                drawnow;
+            end
+        end
+    end
+
+    methods (Access = private)
+        %% Hilfsfunktion für Legenden
+        function legendStrings = createLegend(~, n, prefix)
+            legendStrings = strings(1,n);
+            for i = 1:n
+                legendStrings(i) = sprintf('%s_%d', prefix, i);
+            end
+        end
+    end
+end

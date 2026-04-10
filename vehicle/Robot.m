@@ -8,13 +8,16 @@ classdef Robot
         Dynamics
         nx
         nu
+        state_names
+        input_names
     end
 
     methods
         function obj = Robot(name)
             obj.Name = name;
             data = load('EqM/results/EqM_Diana.mat');
-            obj.Kinematics.G = data.G_y_func;
+            obj.Kinematics.G = data.G_y_func; %4x2, state [x y theta phi_1], input [ph1_1 phi_2]
+            obj.Kinematics.f = @(y,u) data.G_y_func(y) * u;
             obj.Dynamics.M = data.M_eqM_func;
             obj.Dynamics.Minv = data.Minv_eqM_func;
             obj.Dynamics.k = data.k_eqM_func;
@@ -38,5 +41,6 @@ classdef Robot
         function nu = inputDimension(obj)
             nu = obj.nu;
         end
+
     end
 end

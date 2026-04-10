@@ -13,9 +13,8 @@ dyn = robot.getDynamics();
 nx = robot.stateDimension();
 nu = robot.inputDimension();
 
-
 % INPUT TRAJECTORY
-u = Trajectoryu(dT, [0.1*ones(10,1) 0.2*ones(10,1)]);
+u = Trajectoryu(dT, [3*ones(100,1) 5*ones(100,1)]);
 %functions
 u_1 = u.getInputk(1);
 u_vals = u.getInput();
@@ -35,5 +34,11 @@ nx = x.stateDimension();
 t_grid = x.timeGrid();
 
 % SIMULATOR
-% to do
-   
+simulator = Simulator(robot.Kinematics,dT);
+x = simulator.simulate(zeros(4,1),u);
+
+% Visualizer
+visualizer = Visualizer();
+visualizer.plotStates(x);
+visualizer.plotInputs(u);
+visualizer.plotPath(x);

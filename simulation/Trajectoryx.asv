@@ -41,5 +41,20 @@ classdef Trajectoryx < Trajectory
             nx = size(obj.X,2);
         end
 
+
+        function plotStates(obj)            
+            T = obj.timeGrid();
+            X = obj.getState();
+            nx = obj.stateDimension();
+
+            figure();
+
+            for j = 1:
+            subplot(nx,1,1);
+            % plot()
+
+        end
+
+
     end
 end
