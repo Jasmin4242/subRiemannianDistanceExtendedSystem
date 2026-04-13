@@ -1,39 +1,33 @@
 classdef MPCController
     properties (SetAccess = private)
         Vehicle
-        Model
         dT
         horizon
-        Constraints
         solverOptions
         solver
         ySym
         con_ub
         con_lb
+        Model
+        Constraints
     end
 
     methods
-        function obj = MPCController(vehicle, model, dT, horizon, constraints, solverOptions)
-            if nargin < 6                
+        function obj = MPCController(vehicle, dT, horizon, solverOptions)
+            if nargin < 4              
                 solverOptions.opts.ipopt.print_level = 0; % suppress printing the iterations of ipopt
                 solverOptions.opts.print_time = false; % suppress printing the solving times of CasADI
                 solverOptions.solver_ = 'ipopt';
-            end
-
-            if ~isfield(model, 'f')
-                error("MPCController:InvalidModel", ...
-                    "Model must contain a field f with xdot = f(x,u).");
-            end
-            
+            end            
             obj.Vehicle = vehicle;
-            obj.Model = model;
             obj.dT = dT;
             obj.horizon = horizon;
-            obj.Constraints = constraints;
             obj.solverOptions = solverOptions;
-            obj = obj.setupSolver();
             obj.con_ub=zeros(obj.horizon*obj.Vehicle.nx,1);
             obj.con_lb=zeros(obj.horizon*obj.Vehicle.nx,1);
+            obj.Model = vehicle.getModel();
+            obj.Constraints = vehicle.getModel().Constraints;
+            obj = obj.setupSolver();            
         end
 
         function obj = setupSolver(obj)
@@ -151,7 +145,10 @@ classdef MPCController
 
                 if isa(obj.Vehicle, 'Robot')
                     q_x = [1 5 0.1 0]';
-                    q_u = [0.125 0.0125]; 
+                    % % v w as inputs
+                    % q_u = [0.125 0.0125]; 
+                    % wheel speeds as inputs
+                    q_u = [0.125 0.0125];
                     z = [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 0];
                     r = [1 1 2 1];
                     s = [1 1];

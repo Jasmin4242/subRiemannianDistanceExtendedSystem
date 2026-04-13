@@ -11,7 +11,7 @@ classdef Simulator
                 method = "ode45";
             end
 
-            if ~isfield(model, 'f')
+            if ~isprop(model, 'f')
                 error("Simulator:InvalidModel", ...
                     "Model must contain a field f with xdot = f(x,u).");
             end

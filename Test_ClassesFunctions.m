@@ -8,12 +8,14 @@ addpath(genpath('/scratch/tmp/jkrauspenhaar/temp/Matlabinstallationen/casadi-3.6
 
 dT = 0.05;
 robot = Robot('DIANA');
-simulator = Simulator(robot.Kinematics, dT);
+% Modell auswählen
+robot = robot.setModel("kinematics_vw");
+
+simulator = Simulator(robot.getModel(), dT);
 
 %% MPC
 horizon = 30;
-constraints = ConstraintSet(robot);
-mpcController = MPCController(robot, robot.Kinematics, dT, horizon, constraints);
+mpcController = MPCController(robot, dT, horizon);
 x0 = [-0.6; -0.75; 0 ;0];
 
 k_sim = 300;

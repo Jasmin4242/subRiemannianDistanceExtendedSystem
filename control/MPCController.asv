@@ -1,20 +1,19 @@
 classdef MPCController
     properties (SetAccess = private)
         Vehicle
-        Model
         dT
         horizon
-        Constraints
         solverOptions
         solver
         ySym
         con_ub
         con_lb
+        model
     end
 
     methods
-        function obj = MPCController(vehicle, model, dT, horizon, constraints, solverOptions)
-            if nargin < 6                
+        function obj = MPCController(vehicle, dT, horizon, solverOptions)
+            if nargin < 4              
                 solverOptions.opts.ipopt.print_level = 0; % suppress printing the iterations of ipopt
                 solverOptions.opts.print_time = false; % suppress printing the solving times of CasADI
                 solverOptions.solver_ = 'ipopt';
@@ -26,14 +25,14 @@ classdef MPCController
             end
             
             obj.Vehicle = vehicle;
-            obj.Model = model;
             obj.dT = dT;
             obj.horizon = horizon;
-            obj.Constraints = constraints;
             obj.solverOptions = solverOptions;
             obj = obj.setupSolver();
             obj.con_ub=zeros(obj.horizon*obj.Vehicle.nx,1);
             obj.con_lb=zeros(obj.horizon*obj.Vehicle.nx,1);
+            obj.model = robot.getModel().Eqm;
+            obj.model = robot.getModel().Eqm;
         end
 
         function obj = setupSolver(obj)
@@ -150,28 +149,24 @@ classdef MPCController
                 u_k=u(nu*(k-1)+1:nu*k);                   % input cost in time step k
 
                 if isa(obj.Vehicle, 'Robot')
-                    q_x = [1 5 0.1 0];
-                    q_u = [0.125 0.0125]; 
+                    q_x = [1 5 0.1 0]';
+                    % % v w as inputs
+                    % q_u = [0.125 0.0125]; 
+                    % wheel speeds as inputs
+                    q_u = [0.125 0.0125];
                     z = [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 0];
                     r = [1 1 2 1];
                     s = [1 1];
                     d = 2*prod(r);
                     runningcosts = 0;
-                    %states
-                    % for j=1:nx
-                    %     runningcosts = runningcosts + q_x(j)*(z(j,:)*x_k)^(d/r(j));
-                    % end
-                    % %inputs
-                    % for j=1:nu
-                    %     runningcosts = runningcosts + q_u(j)*(u_k(j))^(d/s(j));
-                    % end
-                    alp = 0;
-                    zs = [0;0;0;0];
-                    xs_R = x_k(1); % rotated cost in x (reference frame)
-		            ys_R = x_k(2); % rotated cost in y (reference frame)
-		            thetas_R = x_k(); 
-                    q1 = 1; q2 = 5; q3 = 0.1; r1 = 0.125; r2 = 0.0125;
-                    q1*(xs_R)^4 + q2*(ys_R)^2 + q3*(thetas_R)^4 + r1*u(1)^4 + r2*u(2)^4;
+                    % states
+                    for j=1:nx
+                        runningcosts = runningcosts + (z(j,:)*q_x)*(z(j,:)*x_k)^(d/r(j));
+                    end
+                    % inputs
+                    for j=1:nu
+                        runningcosts = runningcosts + q_u(j)*(u_k(j))^(d/s(j));
+                    end
 
                     objective = objective + 1e7*runningcosts;
                 else
