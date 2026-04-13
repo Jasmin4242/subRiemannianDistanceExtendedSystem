@@ -12,10 +12,10 @@ classdef ConstraintSet
         function obj = ConstraintSet(vehicle, xMin, xMax, uMin, uMax, duMin, duMax)
             if nargin < 2, xMin = -inf*ones(vehicle.stateDimension(),1); end
             if nargin < 3, xMax = inf*ones(vehicle.stateDimension(),1); end
-            if nargin < 4, uMin = [-10; -10]; end
-            if nargin < 5, uMax = [10; 10]; end
-            if nargin < 6, duMin = [-5; -5]; end
-            if nargin < 7, duMax = [5; 5]; end
+            if nargin < 4, uMin = [-0.2; -pi/2]; end
+            if nargin < 5, uMax = [0.2; pi/2]; end
+            if nargin < 6, duMin = uMin/4; end
+            if nargin < 7, duMax = uMax/4; end
 
             obj.xMin = xMin;
             obj.xMax = xMax;

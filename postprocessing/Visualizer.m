@@ -103,7 +103,7 @@ classdef Visualizer
             T = cost.timeGrid();
             cost_data = cost.getCost();
             figure();
-            plot(T,cost_data);
+            semilogy(T,cost_data);
             xlabel('t');
             ylabel('cost');
             grid on;

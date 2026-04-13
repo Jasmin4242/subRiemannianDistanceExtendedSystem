@@ -6,8 +6,10 @@ classdef MPCController
         horizon
         Constraints
         solverOptions
-        % solver
-        % ySym
+        solver
+        ySym
+        con_ub
+        con_lb
     end
 
     methods
@@ -29,29 +31,32 @@ classdef MPCController
             obj.horizon = horizon;
             obj.Constraints = constraints;
             obj.solverOptions = solverOptions;
-            % obj = obj.setupSolver();
+            obj = obj.setupSolver();
+            obj.con_ub=zeros(obj.horizon*obj.Vehicle.nx,1);
+            obj.con_lb=zeros(obj.horizon*obj.Vehicle.nx,1);
         end
 
-        % function obj = setupSolver(obj)
-        %     import casadi.*
-        % 
-        %     nx = obj.Vehicle.nx;
-        %     nu = obj.Vehicle.nu;
-        %     N  = obj.horizon;
-        % 
-        %     y = SX.sym('y', nx*(N+1)+N*nu);
-        % 
-        %     con = obj.nonlinearConstraints(y);
-        %     objective = obj.costfunction(y);
-        % 
-        %     nlp = struct('x', y, 'f', objective, 'g', con);
-        %     solver = nlpsol('solver', obj.solverOptions.solver_, nlp, obj.solverOptions.opts);
-        % 
-        %     obj.ySym = y;
-        %     obj.solver = solver;
-        %     obj.lbg = zeros(N*nx,1);
-        %     obj.ubg = zeros(N*nx,1);
-        % end
+        function obj = setupSolver(obj)
+            import casadi.*
+        
+            nx = obj.Vehicle.nx;
+            nu = obj.Vehicle.nu;
+            N  = obj.horizon;
+        
+            y = SX.sym('y', nx*(N+1)+N*nu);
+            
+            %system dynamics
+            con = obj.nonlinearConstraints(y);
+
+            %cost
+            objective = obj.costfunction(y);
+        
+            nlp = struct('x', y, 'f', objective, 'g', con);
+            solver_ = nlpsol('solver', obj.solverOptions.solver_, nlp, obj.solverOptions.opts);
+        
+            obj.ySym = y;
+            obj.solver = solver_;
+        end
 
         function [u0, sol] = computeInput(obj, x0, y_init)
             sol = obj.solve(x0, y_init);
@@ -63,9 +68,8 @@ classdef MPCController
             nu = obj.Vehicle.nu;
             N  = obj.horizon;
             flag.active = false;
-
-            import casadi.* 
-            y = SX.sym('y', nx*(N+1)+N*nu);
+ 
+            y = obj.ySym;
             
             % state and input constraint
             bounds = obj.Constraints();
@@ -74,20 +78,9 @@ classdef MPCController
             lb(1:nx) = x0;									
             ub(1:nx) = x0; %initial condition
 
-            %system dynamics
-            con_ub=zeros(N*nx,1);
-            con_lb=zeros(N*nx,1); % nonlinear constraints become equality constraints due to system dynamics
-            con = obj.nonlinearConstraints(y);
-
-            % cost function
-            objective = obj.costfunction(y);
-            
-            nlp = struct('x',y,'f',objective,'g',con); % definition of the nonlinear program
-            
-            solver = nlpsol('solver',obj.solverOptions.solver_, nlp, obj.solverOptions.opts);   % definition of the nlp solver
-            res = solver('x0', y_init,'lbx', lb, 'ubx', ub, 'lbg', con_lb, 'ubg', con_ub);
+            res = obj.solver('x0', y_init,'lbx', lb, 'ubx', ub, 'lbg', obj.con_lb, 'ubg', obj.con_ub);
           
-            if ~(solver.stats.success)
+            if ~(obj.solver.stats.success)
                 warning('OCP not solved successfully.')
                 flag.active = true;
             end
@@ -148,7 +141,7 @@ classdef MPCController
             nx = obj.Vehicle.nx;
             nu = obj.Vehicle.nu;
             N  = obj.horizon;
-            objective = 0;                                   % initialization
+            objective = 0;                               % initialization
             x = y(1:nx*(N+1));                           % extract states from optimization variable
             u = y(nx*(N+1)+1:end);                       % extract inputs from optimization variable
             % build cost by summing up stage cost along prediction horizon (no terminal cost)
@@ -157,21 +150,22 @@ classdef MPCController
                 u_k=u(nu*(k-1)+1:nu*k);                   % input cost in time step k
 
                 if isa(obj.Vehicle, 'Robot')
-                    q_x = [1 5 0.1 0];
-                    q_u = [0.000125 0.000125]; 
+                    q_x = [1 5 0.1 0]';
+                    q_u = [0.125 0.0125]; 
                     z = [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 0];
                     r = [1 1 2 1];
                     s = [1 1];
                     d = 2*prod(r);
                     runningcosts = 0;
-                    %states
+                    % states
                     for j=1:nx
-                        runningcosts = runningcosts + q_x(j)*(z(j,:)*x_k)^(d/r(j));
+                        runningcosts = runningcosts + (z(j,:)*q_x)*(z(j,:)*x_k)^(d/r(j));
                     end
-                    %inputs
+                    % inputs
                     for j=1:nu
                         runningcosts = runningcosts + q_u(j)*(u_k(j))^(d/s(j));
                     end
+
                     objective = objective + 1e7*runningcosts;
                 else
                     error('MPCController: running cost not defined for this type of vehicle')                        
