@@ -43,9 +43,7 @@ classdef Simulator
 
             outputTrajectory = Trajectoryx(obj.dT,X);
         end
-    end
 
-    methods (Access = private)
         function xNext = simstep(obj, x, u)
             f = obj.Model.f;
             dT = obj.dT;
@@ -67,5 +65,10 @@ classdef Simulator
                         "Unknown simulation method: %s", obj.Method);
             end
         end
+        
     end
+
+    % methods (Access = private)
+    % 
+    % end
 end

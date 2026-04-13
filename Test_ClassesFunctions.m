@@ -1,0 +1,47 @@
+clear all;
+close all;
+
+addpath(genpath(pwd));
+
+%for Casadi
+addpath(genpath('/scratch/tmp/jkrauspenhaar/temp/Matlabinstallationen/casadi-3.6.7-linux64-matlab2018b'));
+
+dT = 0.05;
+robot = Robot('DIANA');
+simulator = Simulator(robot.Kinematics, dT);
+
+%% MPC
+horizon = 30;
+constraints = ConstraintSet(robot);
+mpcController = MPCController(robot, robot.Kinematics, dT, horizon, constraints);
+xcurrent = [-0.5; -0.3; 0 ;0];
+y_init = mpcController.initialGuessFirst(xcurrent);
+
+k_sim = 50;
+x_data = zeros(k_sim,4);
+x_data(1,:) = xcurrent;
+u_data = zeros(k_sim,2);
+cost_data =zeros(k_sim,1);
+for kk = 1:k_sim
+    kk
+    %compute input
+    [u0, sol] = mpcController.computeInput(xcurrent, y_init);
+    u_data(kk,:) = u0;
+    y_init = mpcController.initialGuess(sol);
+    %apply input
+    xcurrent = simulator.simstep(xcurrent,u0);
+    x_data(kk,:) = xcurrent;
+    cost_data(kk) = sol.Jval;
+end
+
+%% postprocessing
+x = Trajectoryx(dT, x_data);
+u = Trajectoryu(dT, u_data);
+cost = Trajectorycost(dT,cost_data);
+
+% VISUAlIZER
+visualizer = Visualizer();
+visualizer.plotStates(x);
+visualizer.plotInputs(u);
+visualizer.plotPath(x);
+visualizer.plotCosts(cost);

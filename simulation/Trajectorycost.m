@@ -1,10 +1,10 @@
-classdef Trajectoryx < Trajectory
+classdef Trajectorycost < Trajectory
     properties (SetAccess = private)
-        X
+        cost
     end
 
     methods
-        function obj = Trajectoryx(dT, X, t0)
+        function obj = Trajectorycost(dT, cost_data, t0)
             if nargin < 3
                 t0 = 0;
             end
@@ -15,46 +15,26 @@ classdef Trajectoryx < Trajectory
             end
 
             obj.dT = dT;
-            obj.X = X;
+            obj.cost = cost_data;
             obj.t0 = t0;
         end
 
-        function x = getStatek(obj, k)
+        function c = getCostk(obj, k)
             if k < 1 || k > size(obj.X,1)
                 error("InputTrajectory:IndexOutOfRange", ...
                     "Input index k is out of range.");
             end
-            x = obj.X(k,:).';
+            c = obj.cost(k,:).';
         end
 
 
-        function x = getState(obj)
-            x = obj.X;
+        function c = getCost(obj)
+            c = obj.cost;
         end
 
         function N = length(obj)
-            N = size(obj.X,1);
+            N = size(obj.cost,1);
         end
-
-
-        function nx = stateDimension(obj)
-            nx = size(obj.X,2);
-        end
-
-
-        function plotStates(obj)            
-            T = obj.timeGrid();
-            X = obj.getState();
-            nx = obj.stateDimension();
-
-            figure();
-
-            for j = 1:
-            subplot(nx,1,1);
-            % plot()
-
-        end
-
 
     end
 end

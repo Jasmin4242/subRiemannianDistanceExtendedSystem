@@ -65,9 +65,7 @@ classdef Visualizer
             title('x-y diagram');
         end
 
-        %% =========================
-        %% einfache Animation
-        %% =========================
+        % einfache Animation
         function animate(obj, xTraj, step)
             if nargin < 3
                 step = 1;
@@ -98,6 +96,20 @@ classdef Visualizer
                 drawnow;
             end
         end
-    end
 
+
+        % Kosten plotten
+        function plotCosts(obj, cost)
+            T = cost.timeGrid();
+            cost_data = cost.getCost();
+            figure();
+            plot(T,cost_data);
+            xlabel('t');
+            ylabel('cost');
+            grid on;
+            sgtitle('value function');
+        end
+
+    end
 end
+

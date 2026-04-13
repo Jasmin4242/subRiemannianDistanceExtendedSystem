@@ -1,0 +1,200 @@
+classdef MPCController
+    properties (SetAccess = private)
+        Vehicle
+        Model
+        dT
+        horizon
+        Constraints
+        solverOptions
+        % solver
+        % ySym
+    end
+
+    methods
+        function obj = MPCController(vehicle, model, dT, horizon, constraints, solverOptions)
+            if nargin < 6                
+                solverOptions.opts.ipopt.print_level = 0; % suppress printing the iterations of ipopt
+                solverOptions.opts.print_time = false; % suppress printing the solving times of CasADI
+                solverOptions.solver_ = 'ipopt';
+            end
+
+            if ~isfield(model, 'f')
+                error("MPCController:InvalidModel", ...
+                    "Model must contain a field f with xdot = f(x,u).");
+            end
+            
+            obj.Vehicle = vehicle;
+            obj.Model = model;
+            obj.dT = dT;
+            obj.horizon = horizon;
+            obj.Constraints = constraints;
+            obj.solverOptions = solverOptions;
+            % obj = obj.setupSolver();
+        end
+
+        % function obj = setupSolver(obj)
+        %     import casadi.*
+        % 
+        %     nx = obj.Vehicle.nx;
+        %     nu = obj.Vehicle.nu;
+        %     N  = obj.horizon;
+        % 
+        %     y = SX.sym('y', nx*(N+1)+N*nu);
+        % 
+        %     con = obj.nonlinearConstraints(y);
+        %     objective = obj.costfunction(y);
+        % 
+        %     nlp = struct('x', y, 'f', objective, 'g', con);
+        %     solver = nlpsol('solver', obj.solverOptions.solver_, nlp, obj.solverOptions.opts);
+        % 
+        %     obj.ySym = y;
+        %     obj.solver = solver;
+        %     obj.lbg = zeros(N*nx,1);
+        %     obj.ubg = zeros(N*nx,1);
+        % end
+
+        function [u0, sol] = computeInput(obj, x0, y_init)
+            sol = obj.solve(x0, y_init);
+            u0 = sol.u(1:2,:);
+        end
+
+        function sol = solve(obj, x0, y_init)       
+            nx = obj.Vehicle.nx;
+            nu = obj.Vehicle.nu;
+            N  = obj.horizon;
+            flag.active = false;
+
+            import casadi.* 
+            y = SX.sym('y', nx*(N+1)+N*nu);
+            
+            % state and input constraint
+            bounds = obj.Constraints();
+            lb = [repmat(bounds.xMin,N+1,1);repmat(bounds.uMin,N,1)];	% lower bound
+            ub = [repmat(bounds.xMax,N+1,1);repmat(bounds.uMax,N,1)];	% upper bound
+            lb(1:nx) = x0;									
+            ub(1:nx) = x0; %initial condition
+
+            %system dynamics
+            con_ub=zeros(N*nx,1);
+            con_lb=zeros(N*nx,1); % nonlinear constraints become equality constraints due to system dynamics
+            con = obj.nonlinearConstraints(y);
+
+            % cost function
+            objective = obj.costfunction(y);
+            
+            nlp = struct('x',y,'f',objective,'g',con); % definition of the nonlinear program
+            
+            solver = nlpsol('solver',obj.solverOptions.solver_, nlp, obj.solverOptions.opts);   % definition of the nlp solver
+            res = solver('x0', y_init,'lbx', lb, 'ubx', ub, 'lbg', con_lb, 'ubg', con_ub);
+          
+            if ~(solver.stats.success)
+                warning('OCP not solved successfully.')
+                flag.active = true;
+            end
+
+            y_OL = full(res.x);                         % read optimization variable (states and inputs along horizon)
+            x_OL = y_OL(1:nx*(N+1));                    % extract states from optimization variable  
+            u_OL = y_OL(nx*(N+1)+1:end);                % extract inputs from optimization variable
+            val_fct = full(res.f);           % store value of the optimal cost function
+
+            sol = struct();
+            sol.x = x_OL;
+            sol.u = u_OL;
+            sol.Jval = val_fct;
+            sol.exitflag = flag.active;
+        end
+
+        function yinit = initialGuessFirst(obj, x0)
+            nx = obj.Vehicle.nx;
+            nu = obj.Vehicle.nu;
+            N  = obj.horizon;
+
+            X0 = repmat(x0(:), 1, N+1);
+            U0 = 0.5*ones(nu, N); % to do!
+
+            yinit = [X0(:); U0(:)];
+        end
+
+        function yinit = initialGuess(obj, sol)
+            yinit = [sol.x; sol.u];
+        end
+    end
+
+    methods (Access = private)
+        
+        
+        function con = nonlinearConstraints(obj, y)
+            nx = obj.Vehicle.nx;
+            nu = obj.Vehicle.nu;
+            N  = obj.horizon;
+
+            x = y(1:nx*(N+1));                            % extract states from optimization variable
+            u = y(nx*(N+1)+1:end);                        % extract inputs from optimization variable
+            con = [];                                    % init (stacked) constraints for each time step
+            
+            % constraints along prediction horizon (ensure that system dynamics are satisfied)
+	        for k=1:N
+		        z_k = x((k-1)*nx+1:k*nx);                 % current state
+		        z_new = x(k*nx+1:(k+1)*nx);               % subsequent time step      
+		        u_k = u((k-1)*nu+1:k*nu);                 % current control input
+   
+		        % dynamic constraint
+			    ceqnew = z_new - dynamicRK4(obj, z_k, u_k); % constraint on system dynamics
+		        con = [con; ceqnew];                    % repeatedly stack constraints
+            end            
+        end
+
+        function objective = costfunction(obj,y)
+            nx = obj.Vehicle.nx;
+            nu = obj.Vehicle.nu;
+            N  = obj.horizon;
+            objective = 0;                                   % initialization
+            x = y(1:nx*(N+1));                           % extract states from optimization variable
+            u = y(nx*(N+1)+1:end);                       % extract inputs from optimization variable
+            % build cost by summing up stage cost along prediction horizon (no terminal cost)
+            for k=1:N
+                x_k=x(nx*(k-1)+1:nx*k);                   % state cost in time step k
+                u_k=u(nu*(k-1)+1:nu*k);                   % input cost in time step k
+
+                if isa(obj.Vehicle, 'Robot')
+                    q_x = [1 5 0.1 0];
+                    q_u = [0.000125 0.000125]; 
+                    z = [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 0];
+                    r = [1 1 2 1];
+                    s = [1 1];
+                    d = 2*prod(r);
+                    runningcosts = 0;
+                    %states
+                    for j=1:nx
+                        runningcosts = runningcosts + q_x(j)*(z(j,:)*x_k)^(d/r(j));
+                    end
+                    %inputs
+                    for j=1:nu
+                        runningcosts = runningcosts + q_u(j)*(u_k(j))^(d/s(j));
+                    end
+                    objective = objective + 1e7*runningcosts;
+                else
+                    error('MPCController: running cost not defined for this type of vehicle')                        
+                end
+            end            
+        end
+
+
+        % discretized system dynamics (RK4)
+        function x_new = dynamicRK4(obj, x, u)
+            %Runge Kutta Fehlberg.
+            gamma   = [16/135, 0, 6656/12825, 28561/56430, -9/50, 2/55]; % vector related to RKF procdure
+            % see https://www.uni-muenster.de/imperia/md/content/physik_tp/lectures/ss2016/num_methods_ii/rkm.pdf
+            % Core: Runge Kutta 6th order procedure, may cf. Butcher Block
+            k1      = obj.dT*obj.Model.f(x,u);
+            k2      = obj.dT*obj.Model.f(x+k1/4,u);
+            k3      = obj.dT*obj.Model.f(x+3/32*k1+9/32*k2,u);
+            k4      = obj.dT*obj.Model.f(x+1932/2197*k1-7200/2197*k2+7296/2197*k3,u);
+            k5      = obj.dT*obj.Model.f(x+439/216*k1-8*k2+3680/513*k3-845/4104*k4,u);
+            k6      = obj.dT*obj.Model.f(x-8/27*k1+2*k2-3544/2565*k3+1859/4104*k4-11/40*k5,u);   
+            K       = [k1, k2, k3, k4, k5, k6];
+            x_new   = x+K*gamma'; % new solution
+        end
+
+    end
+end
