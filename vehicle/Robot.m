@@ -34,12 +34,10 @@ classdef Robot
             data = load('EqM/results/EqM_Diana.mat');
 
             % kinematic with velocities v and w as inputs
-            f = @(y,u) data.G_y_func_v_omega(y) * u; %x_dot = f(x,u)
-            uMin = [-0.2; -pi/2];
+            f = @(y,u) data.G_y_func_v_omega(y) * u; %x_dot = f(x,u)            
             uMax = [0.2; pi/2];
-            duMin = uMin/4;
-            duMax = uMax/4;
-            constraints = ConstraintSet(obj, uMin, uMax, duMin, duMax);
+            uMin = -uMax;
+            constraints = ConstraintSet(obj, uMin, uMax);
             costParams.z = [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 0];
             costParams.q_x = [1 5 0.1 0]';
             costParams.q_u = [0.125 0.0125];
@@ -47,15 +45,13 @@ classdef Robot
             kinematics_vw = Model("kinematics_vw", f, constraints, costParams);
 
             % kinematic with wheel velocities phi_dot left and right
-            f = @(y,u) data.G_y_func(y) * u; %x_dot = f(x,u)
-            uMin = [-1; -1];
-            uMax = [1; 1];
-            duMin = uMin/4;
-            duMax = uMax/4;
-            constraints = ConstraintSet(obj, uMin, uMax, duMin, duMax);
+            f = @(y,u) data.G_y_func(y) * u; %x_dot = f(x,u)            
+            uMax = 10*ones(2,1);
+            uMin = -uMax;
+            constraints = ConstraintSet(obj, uMin, uMax);
             costParams.z = [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 0];
             costParams.q_x = [1 5 0.1 0]';
-            costParams.q_u = [0.0125 0.0125];
+            costParams.q_u = 2e-5*ones(2,1);
             costParams.r = [1 1 2 1];
             kinematics_phidot = Model("kinematics_phidot", f, constraints, costParams);
        

@@ -1,15 +1,19 @@
 clear all;
 close all;
 
+%% user params
+dT = 0.05;
+robot = Robot('DIANA');
+% Modell auswählen
+% robot = robot.setModel("kinematics_vw");
+robot = robot.setModel("kinematics_phidot");
+
+
+%% initialization
 addpath(genpath(pwd));
 
 %for Casadi
 addpath(genpath('/scratch/tmp/jkrauspenhaar/temp/Matlabinstallationen/casadi-3.6.7-linux64-matlab2018b'));
-
-dT = 0.05;
-robot = Robot('DIANA');
-% Modell auswählen
-robot = robot.setModel("kinematics_vw");
 
 simulator = Simulator(robot.getModel(), dT);
 

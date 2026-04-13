@@ -139,34 +139,27 @@ classdef MPCController
             x = y(1:nx*(N+1));                           % extract states from optimization variable
             u = y(nx*(N+1)+1:end);                       % extract inputs from optimization variable
             % build cost by summing up stage cost along prediction horizon (no terminal cost)
+            q_x = obj.Model.CostParameters.q_x;
+            q_u = obj.Model.CostParameters.q_u;
+            z = obj.Model.CostParameters.z;
+            r = obj.Model.CostParameters.r;
+
             for k=1:N
                 x_k=x(nx*(k-1)+1:nx*k);                   % state cost in time step k
                 u_k=u(nu*(k-1)+1:nu*k);                   % input cost in time step k
 
-                if isa(obj.Vehicle, 'Robot')
-                    q_x = [1 5 0.1 0]';
-                    % % v w as inputs
-                    % q_u = [0.125 0.0125]; 
-                    % wheel speeds as inputs
-                    q_u = [0.125 0.0125];
-                    z = [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 0];
-                    r = [1 1 2 1];
-                    s = [1 1];
-                    d = 2*prod(r);
-                    runningcosts = 0;
-                    % states
-                    for j=1:nx
-                        runningcosts = runningcosts + (z(j,:)*q_x)*(z(j,:)*x_k)^(d/r(j));
-                    end
-                    % inputs
-                    for j=1:nu
-                        runningcosts = runningcosts + q_u(j)*(u_k(j))^(d/s(j));
-                    end
-
-                    objective = objective + 1e7*runningcosts;
-                else
-                    error('MPCController: running cost not defined for this type of vehicle')                        
+                s = [1 1];
+                d = 2*prod(r);
+                runningcosts = 0;
+                % states
+                for j=1:nx
+                    runningcosts = runningcosts + (z(j,:)*q_x)*(z(j,:)*x_k)^(d/r(j));
                 end
+                % inputs
+                for j=1:nu
+                    runningcosts = runningcosts + q_u(j)*(u_k(j))^(d/s(j));
+                end
+                objective = objective + 1e7*runningcosts;                     
             end            
         end
 

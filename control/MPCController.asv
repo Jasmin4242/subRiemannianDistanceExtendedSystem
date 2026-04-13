@@ -8,7 +8,8 @@ classdef MPCController
         ySym
         con_ub
         con_lb
-        model
+        Model
+        Constraints
     end
 
     methods
@@ -17,22 +18,16 @@ classdef MPCController
                 solverOptions.opts.ipopt.print_level = 0; % suppress printing the iterations of ipopt
                 solverOptions.opts.print_time = false; % suppress printing the solving times of CasADI
                 solverOptions.solver_ = 'ipopt';
-            end
-
-            if ~isfield(model, 'f')
-                error("MPCController:InvalidModel", ...
-                    "Model must contain a field f with xdot = f(x,u).");
-            end
-            
+            end            
             obj.Vehicle = vehicle;
             obj.dT = dT;
             obj.horizon = horizon;
             obj.solverOptions = solverOptions;
-            obj = obj.setupSolver();
             obj.con_ub=zeros(obj.horizon*obj.Vehicle.nx,1);
             obj.con_lb=zeros(obj.horizon*obj.Vehicle.nx,1);
-            obj.model = robot.getModel().Eqm;
-            obj.model = robot.getModel().Eqm;
+            obj.Model = vehicle.getModel();
+            obj.Constraints = vehicle.getModel().Constraints;
+            obj = obj.setupSolver();            
         end
 
         function obj = setupSolver(obj)
@@ -144,6 +139,11 @@ classdef MPCController
             x = y(1:nx*(N+1));                           % extract states from optimization variable
             u = y(nx*(N+1)+1:end);                       % extract inputs from optimization variable
             % build cost by summing up stage cost along prediction horizon (no terminal cost)
+            q_x = obj.Model.CostParameters.q_x;
+            q_u = obj.Model.CostParameters.q_u;
+            q_u = obj.Model.CostParameters.q_u;
+            q_u = obj.Model.CostParameters.q_;
+
             for k=1:N
                 x_k=x(nx*(k-1)+1:nx*k);                   % state cost in time step k
                 u_k=u(nu*(k-1)+1:nu*k);                   % input cost in time step k
