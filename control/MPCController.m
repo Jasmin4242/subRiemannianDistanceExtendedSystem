@@ -23,9 +23,10 @@ classdef MPCController
             obj.dT = dT;
             obj.horizon = horizon;
             obj.solverOptions = solverOptions;
-            obj.con_ub=zeros(obj.horizon*obj.Vehicle.nx,1);
-            obj.con_lb=zeros(obj.horizon*obj.Vehicle.nx,1);
             obj.Model = vehicle.getModel();
+            obj.con_ub=zeros(obj.horizon*obj.Model.nx,1);
+            obj.con_lb=zeros(obj.horizon*obj.Model.nx,1);
+            
             obj.Constraints = vehicle.getModel().Constraints;
             obj = obj.setupSolver();            
         end
@@ -33,8 +34,8 @@ classdef MPCController
         function obj = setupSolver(obj)
             import casadi.*
         
-            nx = obj.Vehicle.nx;
-            nu = obj.Vehicle.nu;
+            nx = obj.Model.nx;
+            nu = obj.Model.nu;
             N  = obj.horizon;
         
             y = SX.sym('y', nx*(N+1)+N*nu);
@@ -58,8 +59,8 @@ classdef MPCController
         end
 
         function sol = solve(obj, x0, y_init)       
-            nx = obj.Vehicle.nx;
-            nu = obj.Vehicle.nu;
+            nx = obj.Model.nx;
+            nu = obj.Model.nu;
             N  = obj.horizon;
             flag.active = false;
  
@@ -92,8 +93,8 @@ classdef MPCController
         end
 
         function yinit = initialGuessFirst(obj, x0)
-            nx = obj.Vehicle.nx;
-            nu = obj.Vehicle.nu;
+            nx = obj.Model.nx;
+            nu = obj.Model.nu;
             N  = obj.horizon;
 
             X0 = repmat(x0(:), 1, N+1);
@@ -111,8 +112,8 @@ classdef MPCController
         
         
         function con = nonlinearConstraints(obj, y)
-            nx = obj.Vehicle.nx;
-            nu = obj.Vehicle.nu;
+            nx = obj.Model.nx;
+            nu = obj.Model.nu;
             N  = obj.horizon;
 
             x = y(1:nx*(N+1));                            % extract states from optimization variable
@@ -132,8 +133,8 @@ classdef MPCController
         end
 
         function objective = costfunction(obj,y)
-            nx = obj.Vehicle.nx;
-            nu = obj.Vehicle.nu;
+            nx = obj.Model.nx;
+            nu = obj.Model.nu;
             N  = obj.horizon;
             objective = 0;                               % initialization
             x = y(1:nx*(N+1));                           % extract states from optimization variable

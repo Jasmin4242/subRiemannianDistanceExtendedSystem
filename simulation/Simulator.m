@@ -22,10 +22,13 @@ classdef Simulator
         end
 
         function [x,u,cost] = sim_MPC_closedLoop(obj,xcurrent, k_sim,mpcController)
+            nx = obj.Model.nx;
+            nu = obj.Model.nu;
+
             y_init = mpcController.initialGuessFirst(xcurrent);
-            x_data = zeros(k_sim,4);
+            x_data = zeros(k_sim,nx);
             x_data(1,:) = xcurrent;
-            u_data = zeros(k_sim,2);
+            u_data = zeros(k_sim,nu);
             cost_data =zeros(k_sim,1);
             for kk = 1:k_sim
                 kk

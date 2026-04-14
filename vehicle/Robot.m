@@ -6,62 +6,77 @@ classdef Robot
     properties (SetAccess = private)
         AvailableModels
         ActiveModelName
-        nx
-        nu
-        state_names
-        input_names
     end
 
     methods
         function obj = Robot(name)
             obj.Name = name;
 
-            obj.nx = 4;
-            obj.nu = 2;
-
             % Map für Modelle
-            obj.AvailableModels = containers.Map();
+            obj.AvailableModels = containers.Map('KeyType', 'char', 'ValueType', 'any');
         
             % Modelle hinzufügen
             obj = obj.initializeModels();
         
             % Standardmodell setzen
-            modelNames = obj.AvailableModels.keys();
+            modelNames = keys(obj.AvailableModels);
             obj.ActiveModelName = modelNames{1};
         end
 
         function obj = initializeModels(obj)
             data = load('EqM/results/EqM_Diana.mat');
-
-            % kinematic with velocities v and w as inputs
+            
+            %% Kinematics
+            % x=[x y theta phi_l], u=[v omega]
             f = @(y,u) data.G_y_func_v_omega(y) * u; %x_dot = f(x,u)            
             uMax = [0.2; pi/2];
             uMin = -uMax;
-            constraints = ConstraintSet(obj, uMin, uMax);
+            nx = 4;
+            nu = 2;
+            constraints = ConstraintSet(obj, nx, nu, uMin, uMax);
             costParams.z = [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 0];
             costParams.q_x = [1 5 0.1 0]';
             costParams.q_u = [0.125 0.0125];
-            costParams.r = [1 1 2 1];
-            kinematics_vw = Model("kinematics_vw", f, constraints, costParams);
-
-            % kinematic with wheel velocities phi_dot left and right
+            costParams.r = [1 1 2 1];            
+            kinematics_vw = Model('kinematics_vw', f, constraints, costParams,nx,nu);
+            
+            % x=[x y theta phi_l], u=[phi_l_dot phi_r_dot]
             f = @(y,u) data.G_y_func(y) * u; %x_dot = f(x,u)            
             uMax = 10*ones(2,1);
             uMin = -uMax;
-            constraints = ConstraintSet(obj, uMin, uMax);
+            nx = 4;
+            nu = 2;
+            constraints = ConstraintSet(obj, nx, nu, uMin, uMax);
             costParams.z = [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 0];
             costParams.q_x = [1 5 0.1 0]';
             costParams.q_u = 2e-5*ones(2,1);
             costParams.r = [1 1 2 1];
-            kinematics_phidot = Model("kinematics_phidot", f, constraints, costParams);
+            kinematics_phidot = Model('kinematics_phidot', f, constraints, costParams,nx,nu);
+
+            %% Dynamics
+            % x=[x y theta phi_l phi_l_dot phi_r_dot], u=[tau_1 tau_2]
+            f_kin = @(y,u) data.G_y_func(y) * [y(5);y(6)];            
+            f = @(y,u) [f_kin(y,u);data.Minv_eqM_func(y)*u];
+            uMax = 0.2*ones(2,1);
+            uMin = -uMax;
+            nx = 6;
+            nu = 2;
+            constraints = ConstraintSet(obj, nx, nu, uMin, uMax);
+            costParams.z = [1 0 0 0 0 0; 0 0 1 0 0 0; 0 1 0 0 0 0; zeros(1,6); 0 0 0 0 1 0; 0 0 0 0 0 1];
+            costParams.q_x = [1 5 0.1 0 2e-5*ones(1,2)]';
+            costParams.q_u = 1*ones(2,1);
+            costParams.r = [1 1 2 1 1 1];
+            dynamics_phidot = Model('dynamics_phidot', f, constraints, costParams,nx,nu);
+
        
             % available models
-            obj.AvailableModels("kinematics_vw") = kinematics_vw;
-            obj.AvailableModels("kinematics_phidot") = kinematics_phidot;
+            obj.AvailableModels('kinematics_vw') = kinematics_vw;
+            obj.AvailableModels('kinematics_phidot') = kinematics_phidot;
+            obj.AvailableModels('dynamics_phidot') = dynamics_phidot;
         end
 
         function obj = setModel(obj, name)   
-            name = string(name);
+            name = char(name);
             if ~isKey(obj.AvailableModels, name)
                 error("Robot:UnknownModel", ...
                     "Model '%s' not available.", name);
@@ -70,15 +85,7 @@ classdef Robot
         end
 
         function config = getModel(obj)
-            config = obj.AvailableModels(obj.ActiveModelName);
-        end
-
-        function nx = stateDimension(obj)
-            nx = obj.nx;
-        end
-
-        function nu = inputDimension(obj)
-            nu = obj.nu;
+            config = obj.AvailableModels(char(obj.ActiveModelName));
         end
 
     end

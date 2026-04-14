@@ -4,10 +4,14 @@ close all;
 %% user params
 dT = 0.05;
 robot = Robot('DIANA');
-% Modell auswählen
-% robot = robot.setModel("kinematics_vw");
-robot = robot.setModel("kinematics_phidot");
 
+% Modell auswählen
+% robot = robot.setModel('kinematics_vw');
+% robot = robot.setModel('kinematics_phidot');
+% x0 = [-0.6; -0.75; 0 ;0];
+
+robot = robot.setModel('dynamics_phidot');
+x0 = [-0.6; -0.75; 0 ;0; 0; 0];
 
 %% initialization
 addpath(genpath(pwd));
@@ -20,7 +24,6 @@ simulator = Simulator(robot.getModel(), dT);
 %% MPC
 horizon = 30;
 mpcController = MPCController(robot, dT, horizon);
-x0 = [-0.6; -0.75; 0 ;0];
 
 k_sim = 300;
 [x,u,cost] = simulator.sim_MPC_closedLoop(x0, k_sim,mpcController);
