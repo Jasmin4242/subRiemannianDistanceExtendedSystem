@@ -10,6 +10,7 @@ classdef MPCController
         con_lb
         Model
         Constraints
+        angle_diff_max
     end
 
     methods
@@ -24,8 +25,21 @@ classdef MPCController
             obj.horizon = horizon;
             obj.solverOptions = solverOptions;
             obj.Model = vehicle.getModel();
-            obj.con_ub=zeros(obj.horizon*vehicle.stateDimension(),1);
-            obj.con_lb=zeros(obj.horizon*vehicle.nx,1);
+
+            if isa(vehicle, 'Trailer') %0 \leq abs(theta-theta_trailer) < 90deg
+                obj.angle_diff_max = 90*pi/180;
+                obj.con_ub = [zeros(obj.horizon*obj.Model.nx,1); ...
+                              obj.angle_diff_max*ones(obj.horizon,1)];
+                obj.con_lb = [zeros(obj.horizon*obj.Model.nx,1); ...
+                              zeros(obj.horizon,1)];
+            else
+                obj.angle_diff_max = [];
+                obj.con_ub = zeros(obj.horizon*obj.Model.nx,1);
+                obj.con_lb = zeros(obj.horizon*obj.Model.nx,1);
+            end
+
+            obj.con_ub=zeros(obj.horizon*obj.Model.nx,1);
+            obj.con_lb=zeros(obj.horizon*obj.Model.nx,1);
             
             obj.Constraints = vehicle.getModel().Constraints;
             obj = obj.setupSolver();            
@@ -93,8 +107,8 @@ classdef MPCController
         end
 
         function yinit = initialGuessFirst(obj, x0)
-            nx = obj.Vehicle.nx;
-            nu = obj.Vehicle.nu;
+            nx = obj.Model.nx;
+            nu = obj.Model.nu;
             N  = obj.horizon;
 
             X0 = repmat(x0(:), 1, N+1);
@@ -108,10 +122,9 @@ classdef MPCController
         end
     end
 
-    methods (Access = private)
+    methods (Access = private)        
         
-        
-        function con = nonlinearConstraints(obj, y)
+        function con = nonlinearConstraints(obj, y) 
             nx = obj.Model.nx;
             nu = obj.Model.nu;
             N  = obj.horizon;
@@ -129,22 +142,35 @@ classdef MPCController
 		        % dynamic constraint
 			    ceqnew = z_new - dynamicRK4(obj, z_k, u_k); % constraint on system dynamics
 		        con = [con; ceqnew];                    % repeatedly stack constraints
+
+                if isa(obj.Vehicle, 'Trailer') %0 \leq abs(theta-theta_trailer) < 90deg
+                    abs_thetas = abs(z_k(3) - z_k(4));
+                    con = [con; abs_thetas];
+                end
             end            
         end
 
         function objective = costfunction(obj,y)
-            nx = obj.Vehicle.nx;
-            nu = obj.Vehicle.nu;
+            nx = obj.Model.nx;
+            nu = obj.Model.nu;
             N  = obj.horizon;
             objective = 0;                               % initialization
             x = y(1:nx*(N+1));                           % extract states from optimization variable
             u = y(nx*(N+1)+1:end);                       % extract inputs from optimization variable
             % build cost by summing up stage cost along prediction horizon (no terminal cost)
-            q_x = obj.Model.CostParameters.q_x;
+            q_z = obj.Model.CostParameters.q_z;
             q_u = obj.Model.CostParameters.q_u;
             z = obj.Model.CostParameters.z;
             r = obj.Model.CostParameters.r;
-
+            
+            % %debugging:
+            % x = [0.1 0 0 0 0 0 0.1 0 0 0 0 0 ]' %bsp für z1
+            % x = [0 0 0.1 0 0 0 0 0 0.1 0 0 0 ]' %bsp für z2
+            % x = [0 0.1 0 0.1 0 0 0 0.1 0 0.1 0 0 ]' %bsp für z3
+            % % x = [0 0.1 0 0 0 0 0 0.1 0 0 0 0 ]' %bsp für z4
+            % u =zeros(1,4)
+            % N=2
+            % objective = 0
             for k=1:N
                 x_k=x(nx*(k-1)+1:nx*k);                   % state cost in time step k
                 u_k=u(nu*(k-1)+1:nu*k);                   % input cost in time step k
@@ -154,14 +180,14 @@ classdef MPCController
                 runningcosts = 0;
                 % states
                 for j=1:nx
-                    runningcosts = runningcosts + (z(j,:)*q_x)*(z(j,:)*x_k)^(d/r(j));
+                    runningcosts = runningcosts + q_z(j)*(z(j,:)*x_k)^(d/r(j));
                 end
                 % inputs
                 for j=1:nu
                     runningcosts = runningcosts + q_u(j)*(u_k(j))^(d/s(j));
                 end
                 objective = objective + 1e7*runningcosts;                     
-            end            
+            end  
         end
 
 

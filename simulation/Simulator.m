@@ -26,7 +26,7 @@ classdef Simulator
             nu = obj.Model.nu;
 
             y_init = mpcController.initialGuessFirst(xcurrent);
-            x_data = zeros(k_sim,nx);
+            x_data = zeros(k_sim+1,nx);
             x_data(1,:) = xcurrent;
             u_data = zeros(k_sim,nu);
             cost_data =zeros(k_sim,1);
@@ -38,7 +38,7 @@ classdef Simulator
                 y_init = mpcController.initialGuess(sol);
                 %apply input
                 xcurrent = obj.simstep(xcurrent,u0);
-                x_data(kk,:) = xcurrent;
+                x_data(kk+1,:) = xcurrent;
                 cost_data(kk) = sol.Jval;
             end
             x = Trajectoryx(obj.dT, x_data);

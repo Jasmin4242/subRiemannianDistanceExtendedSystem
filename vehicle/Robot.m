@@ -35,9 +35,10 @@ classdef Robot
             nu = 2;
             constraints = ConstraintSet(obj, nx, nu, uMin, uMax);
             costParams.z = [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 0];
-            costParams.q_x = [1 5 0.1 0]';
+            costParams.q_z = [1 0.1 5 0]';
             costParams.q_u = [0.125 0.0125];
-            costParams.r = [1 1 2 1];            
+            costParams.r = [1 1 2 1];   
+            costParams.d = 2*prod(costParams.r);
             kinematics_vw = Model('kinematics_vw', f, constraints, costParams,nx,nu);
             
             % x=[x y theta phi_l], u=[phi_l_dot phi_r_dot]
@@ -48,9 +49,10 @@ classdef Robot
             nu = 2;
             constraints = ConstraintSet(obj, nx, nu, uMin, uMax);
             costParams.z = [1 0 0 0; 0 0 1 0; 0 1 0 0; 0 0 0 0];
-            costParams.q_x = [1 5 0.1 0]';
+            costParams.q_z = [1 0.1 5 0]';
             costParams.q_u = 2e-5*ones(2,1);
             costParams.r = [1 1 2 1];
+            costParams.d = 2*prod(costParams.r);
             kinematics_phidot = Model('kinematics_phidot', f, constraints, costParams,nx,nu);
 
             %% Dynamics
@@ -63,9 +65,10 @@ classdef Robot
             nu = 2;
             constraints = ConstraintSet(obj, nx, nu, uMin, uMax);
             costParams.z = [1 0 0 0 0 0; 0 0 1 0 0 0; 0 1 0 0 0 0; zeros(1,6); 0 0 0 0 1 0; 0 0 0 0 0 1];
-            costParams.q_x = [1 5 0.1 0 2e-5*ones(1,2)]';
+            costParams.q_z = [1 0.1 5 0 2e-5*ones(1,2)]';
             costParams.q_u = 1*ones(2,1);
             costParams.r = [1 1 2 1 1 1];
+            costParams.d = 2*prod(costParams.r);
             dynamics_phidot = Model('dynamics_phidot', f, constraints, costParams,nx,nu);
 
        

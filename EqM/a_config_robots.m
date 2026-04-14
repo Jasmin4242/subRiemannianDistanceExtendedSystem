@@ -57,3 +57,5 @@ robot.Lt = Lt_val;
 robot.b1x = b1x_val;
 % car
 robot.ell = ell_val;
+
+save('results/config.mat')
