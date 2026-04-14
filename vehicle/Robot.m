@@ -6,6 +6,7 @@ classdef Robot
     properties (SetAccess = private)
         AvailableModels
         ActiveModelName
+        axisLenght
     end
 
     methods
@@ -21,6 +22,10 @@ classdef Robot
             % Standardmodell setzen
             modelNames = keys(obj.AvailableModels);
             obj.ActiveModelName = modelNames{1};
+
+            % axis length for visualization
+            data_config = load('EqM/results/config.mat');
+            obj.axisLenght = data_config.L_val;
         end
 
         function obj = initializeModels(obj)

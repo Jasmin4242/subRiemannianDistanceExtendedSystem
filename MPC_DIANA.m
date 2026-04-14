@@ -35,3 +35,4 @@ visualizer.plotStates(x);
 visualizer.plotInputs(u);
 visualizer.plotPath(x);
 visualizer.plotCosts(cost);
+visualizer.animation(x, robot);

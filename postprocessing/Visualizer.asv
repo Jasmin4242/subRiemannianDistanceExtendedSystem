@@ -159,17 +159,17 @@ classdef Visualizer
             theta_robot = x(:,3);
             theta_trailer = x(:,4);
         
-            robot_radius = vehicle.axisLength/2;
+            robot_radius = vehicle.axisLenght/2;
         
-            trailer_width = vehicle.axisLengthTrailer;
-            trailer_length  = (1/2) * vehicle.axisLength;
+            trailer_length = vehicle.axisLengthTrailer;
+            trailer_width  = (2/3) * vehicle.axisLenght;
             b1x = vehicle.hookLength;
         
             x_trailer = x_robot - b1x*cos(theta_trailer);
             y_trailer = y_robot - b1x*sin(theta_trailer);
         
             % margins                
-            margin = vehicle.axisLength;
+            margin = vehicle.axisLenght;
             xmin = min([x_robot; x_trailer]) - margin;
             xmax = max([x_robot; x_trailer]) + margin;
             ymin = min([y_robot; y_trailer]) - margin;
@@ -202,11 +202,11 @@ classdef Visualizer
             % hook link
             h_link = plot(nan, nan, 'k-', 'LineWidth', 1.5);
         
-            for k = 1:length(x_robot)
+            for k = 1:length(x_robot);
                 p_robot = [x_robot(k); y_robot(k)];
                 p_trailer = [x_trailer(k); y_trailer(k)];
         
-                % robot
+                % Robot
                 set(h_robot, 'Position', [ ...
                     p_robot(1) - robot_radius, ...
                     p_robot(2) - robot_radius, ...
@@ -214,22 +214,22 @@ classdef Visualizer
                     2*robot_radius]);
                 set(h_center_robot, 'XData', p_robot(1), 'YData', p_robot(2));
         
-                % trailer
-                trailer_xy = obj.orientedRectangle(p_trailer, theta_trailer(k), trailer_length, trailer_width);
+                % Trailer
+                trailer_xy = orientedRectangle(p_trailer, theta_trailer(k), trailer_length, trailer_width);
                 set(h_trailer, 'XData', trailer_xy(1,:), 'YData', trailer_xy(2,:));
                 set(h_center_trailer, 'XData', p_trailer(1), 'YData', p_trailer(2));
         
-                % hook link
+                % Verbindung der Mittelpunkte
                 set(h_link, 'XData', [p_robot(1), p_trailer(1)], ...
                             'YData', [p_robot(2), p_trailer(2)]);
         
-                % direction arrow
+                % Richtungspfeil Roboter
                 dir_len_robot = robot_radius;
                 set(h_heading_robot, ...
                     'XData', [p_robot(1), p_robot(1) + dir_len_robot*cos(theta_robot(k))], ...
                     'YData', [p_robot(2), p_robot(2) + dir_len_robot*sin(theta_robot(k))]);
         
-                % trailer
+                % Richtungspfeil Trailer
                 dir_len_trailer = 0.5 * trailer_length;
                 set(h_heading_trailer, ...
                     'XData', [p_trailer(1), p_trailer(1) + dir_len_trailer*cos(theta_trailer(k))], ...
@@ -240,7 +240,7 @@ classdef Visualizer
             end
         end
 
-        function corners_rectangle = orientedRectangle(obj,center, angle, L, W)            
+        function corners_rectangle = orientedRectangle(center, angle, L, W)            
                 corners_local = [ ...
                     -L/2, -W/2;
                      L/2, -W/2;

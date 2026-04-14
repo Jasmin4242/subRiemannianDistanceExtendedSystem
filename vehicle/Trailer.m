@@ -6,6 +6,9 @@ classdef Trailer
     properties (SetAccess = private)
         AvailableModels
         ActiveModelName
+        axisLength
+        axisLengthTrailer
+        hookLength
     end
 
     methods
@@ -21,6 +24,11 @@ classdef Trailer
             % Standardmodell setzen
             modelNames = keys(obj.AvailableModels);
             obj.ActiveModelName = modelNames{1};
+            
+            data_config = load('EqM/results/config.mat');
+            obj.axisLength = data_config.L_val;
+            obj.axisLengthTrailer = data_config.Lt_val;
+            obj.hookLength = data_config.b1x_val;
         end
 
         function obj = initializeModels(obj)
