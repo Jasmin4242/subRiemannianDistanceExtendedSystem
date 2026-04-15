@@ -29,5 +29,11 @@ classdef Trajectoryx < Trajectory
             nx = size(obj.X,2);
         end
 
+        function saveTable(obj,skip)
+            [~, git_hash] = system('git rev-parse --short HEAD');
+            git_hash = strtrim(git_hash);
+            data2pgftable(fullfile(dir_str,num2str(dT_des*1000),'X0123Y0123.txt'), data, 'git_hash',git_hash);
+        end
+
     end
 end
