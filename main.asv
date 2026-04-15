@@ -11,10 +11,10 @@ vehicle = Trailer('trailer');
 % choose the model
 % modelname = 'kinematics_vw';
 % modelname = 'kinematics_phidot';
-modelname = 'dynamics_phidot';
+% modelname = 'dynamics_phidot';
 
 % git and storing results
-store_git_info = true;
+store_git_info = false;
 save_results = true;
 
 % choose the initial condition
@@ -26,7 +26,7 @@ if isa(vehicle,'Robot')
     end
 elseif isa(vehicle,'Trailer')
     if startsWith(modelname, 'dynamics')
-        x0 = [-0.6; -0.75; 0; 0; 0; 0; 0; 0];
+        x0 = [0; 0.4; 5*pi/180; 5*pi/180; 0; 0; 0; 0];
     else
         x0 = [-0.6; -0.75; 0; 0; 0; 0];
     end    
@@ -63,7 +63,7 @@ visualizer = Visualizer();
 visualizer.animation(x, vehicle);
 visualizer.plotStates(x);
 visualizer.plotInputs(u);
-% visualizer.plotPath(x);
+visualizer.plotPath(x);
 visualizer.plotCosts(cost);  
 
 %% store results

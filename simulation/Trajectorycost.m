@@ -36,5 +36,20 @@ classdef Trajectorycost < Trajectory
             N = size(obj.cost,1);
         end
 
+
+        function saveTable(obj,skip, store_git_info)
+            data.time = obj.timeGrid();
+            data.costs = obj.cost;            
+
+            if store_git_info == false
+                warning('no git info stored')
+                data2pgftable('results/Trajectorycosts.txt', data,'skip',skip);
+            else
+                [~, git_hash] = system('git rev-parse --short HEAD');
+                git_hash = strtrim(git_hash);
+                data2pgftable('results/Trajectorycosts.txt', data, 'git_hash',git_hash,'skip',skip);
+            end
+        end
+
     end
 end

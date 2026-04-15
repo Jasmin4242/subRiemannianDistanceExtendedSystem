@@ -29,10 +29,20 @@ classdef Trajectoryx < Trajectory
             nx = size(obj.X,2);
         end
 
-        function saveTable(obj,skip)
-            [~, git_hash] = system('git rev-parse --short HEAD');
-            git_hash = strtrim(git_hash);
-            data2pgftable(fullfile(dir_str,num2str(dT_des*1000),'X0123Y0123.txt'), data, 'git_hash',git_hash);
+        function saveTable(obj,skip, store_git_info)
+            data.time = obj.timeGrid();
+            for j = 1:length(obj.stateNames)
+                data.(obj.stateNames(j)) = obj.X(:,j);
+            end
+
+            if store_git_info == false
+                warning('no git info stored')
+                data2pgftable('results/Trajectoryx.txt', data,'skip',skip);
+            else
+                [~, git_hash] = system('git rev-parse --short HEAD');
+                git_hash = strtrim(git_hash);
+                data2pgftable('results/Trajectoryx.txt', data, 'git_hash',git_hash,'skip',skip);
+            end
         end
 
     end

@@ -79,10 +79,10 @@ classdef Trailer
 
             %% Dynamics
             stateNames = ["x" "y" "theta" "theta_t" "phi_l" "phi_1_t" "phi_l_dot" "phi_r_dot"];
-            inputNames = ["phi_dot_l" "phi_dot_r"];
+            inputNames = ["tau_l" "tau_r"];
             f_kin = @(y,u) data.G_y_func(y) * [y(7);y(8)];            
             f = @(y,u) [f_kin(y,u);data.Minv_eqM_func(y)*u];
-            uMax = 0.2*ones(2,1);
+            uMax = 0.02*ones(2,1);
             uMin = -uMax;
             nx = 8;
             nu = 2;
