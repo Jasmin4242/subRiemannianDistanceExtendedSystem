@@ -77,7 +77,7 @@ classdef Trailer
 
             %% Dynamics
             % x=[x y theta theta_t phi_l phi_1_t phi_l_dot phi_r_dot], u=[tau_1 tau_2]
-            f_kin = @(y,u) data.G_y_func(y) * [y(7);y(8)];            
+            f_kin = @(y,u) data.G_y_func(y) * [y(5);y(6)];            
             f = @(y,u) [f_kin(y,u);data.Minv_eqM_func(y)*u];
             uMax = 0.2*ones(2,1);
             uMin = -uMax;
@@ -92,10 +92,9 @@ classdef Trailer
                             zeros(1,8);...
                             0 0 0 0 0 0 1 0;...
                             0 0 0 0 0 0 0 1];
-            costParams.q_z = [0.1 0.1 5 5 0 0 2e-5*ones(1,2)]';
+            costParams.q_x = [0.1 0.1 5 5 0 0 2e-5*ones(1,2)]';
             costParams.q_u = 1*ones(2,1);
             costParams.r = [1 1 2 3 1 1 1 1];
-            costParams.d = prod(costParams.r);
             dynamics_phidot = Model('dynamics_phidot', f, constraints, costParams,nx,nu);
 
        
