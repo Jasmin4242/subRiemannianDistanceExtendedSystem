@@ -1,11 +1,12 @@
 classdef Trajectoryu < Trajectory
     properties (SetAccess = private)
         U
+        inputNames
     end
 
     methods
-        function obj = Trajectoryu(dT, U, t0)
-            if nargin < 3
+        function obj = Trajectoryu(dT, U,inputNames, t0)
+            if nargin < 4
                 t0 = 0;
             end
 
@@ -16,20 +17,8 @@ classdef Trajectoryu < Trajectory
 
             obj.dT = dT;
             obj.U = U;
+            obj.inputNames = inputNames;
             obj.t0 = t0;
-        end
-
-        function u = getInputk(obj, k)
-            if k < 1 || k > size(obj.U,1)
-                error("InputTrajectory:IndexOutOfRange", ...
-                    "Input index k is out of range.");
-            end
-            u = obj.U(k,:).';
-        end
-
-
-        function u = getInput(obj)
-            u = obj.U;
         end
 
         function N = length(obj)

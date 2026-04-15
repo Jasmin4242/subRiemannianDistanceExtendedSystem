@@ -15,7 +15,7 @@ classdef Visualizer
         % Zustände plotten
         function plotStates(obj, xTraj)
             T = xTraj.timeGrid();
-            X = xTraj.getState();
+            X = xTraj.X;
             nx = xTraj.stateDimension();
 
             figure();
@@ -23,7 +23,7 @@ classdef Visualizer
                 subplot(nx,1,j);
                 plot(T,X(:,j));
                 xlabel('t');
-                ylabel(strcat('x',num2str(j)));
+                ylabel(xTraj.stateNames(j));
                 grid on;
             end  
             sgtitle('state trajectories');
@@ -32,7 +32,7 @@ classdef Visualizer
         % Inputs plotten
         function plotInputs(obj, uTraj)
             T = uTraj.timeGrid();
-            U = uTraj.getInput();
+            U = uTraj.U();
             nu = uTraj.inputDimension();
 
             figure();
@@ -40,7 +40,7 @@ classdef Visualizer
                 subplot(nu,1,j);
                 plot(T,U(:,j));
                 xlabel('t');
-                ylabel(strcat('u',num2str(j)));
+                ylabel(uTraj.inputNames(j));
                 grid on;
             end  
             sgtitle('input trajectories');
@@ -54,14 +54,14 @@ classdef Visualizer
                 idxY = 2;
             end
 
-            X = xTraj.getState();
+            X = xTraj.X();
 
             figure;
             plot(X(:,idxX), X(:,idxY), 'LineWidth', 2);
             grid on;
             axis equal;
-            xlabel(sprintf('x_%d', idxX));
-            ylabel(sprintf('x_%d', idxY));
+            xlabel(xTraj.stateNames(1));
+            ylabel(xTraj.stateNames(2));
             title('x-y diagram');
         end
 
@@ -73,8 +73,7 @@ classdef Visualizer
             end            
         end     
             
-            
-          
+      
         % Kosten plotten
         function plotCosts(obj, cost)
             T = cost.timeGrid();

@@ -1,11 +1,12 @@
 classdef Trajectoryx < Trajectory
     properties (SetAccess = private)
         X
+        stateNames
     end
 
     methods
-        function obj = Trajectoryx(dT, X, t0)
-            if nargin < 3
+        function obj = Trajectoryx(dT, X, stateNames, t0)
+            if nargin < 4
                 t0 = 0;
             end
 
@@ -16,26 +17,13 @@ classdef Trajectoryx < Trajectory
 
             obj.dT = dT;
             obj.X = X;
+            obj.stateNames = stateNames;
             obj.t0 = t0;
-        end
-
-        function x = getStatek(obj, k)
-            if k < 1 || k > size(obj.X,1)
-                error("InputTrajectory:IndexOutOfRange", ...
-                    "Input index k is out of range.");
-            end
-            x = obj.X(k,:).';
-        end
-
-
-        function x = getState(obj)
-            x = obj.X;
         end
 
         function N = length(obj)
             N = size(obj.X,1);
         end
-
 
         function nx = stateDimension(obj)
             nx = size(obj.X,2);

@@ -32,7 +32,8 @@ classdef Robot
             data = load('EqM/results/EqM_Diana.mat');
             
             %% Kinematics
-            % x=[x y theta phi_l], u=[v omega]
+            stateNames = ["x" "y" "theta" "phi_l"];
+            inputNames = ["v" "omega"];
             f = @(y,u) data.G_y_func_v_omega(y) * u; %x_dot = f(x,u)            
             uMax = [0.2; pi/2];
             uMin = -uMax;
@@ -44,9 +45,10 @@ classdef Robot
             costParams.q_u = [0.125 0.0125];
             costParams.r = [1 1 2 1];   
             costParams.d = 2*prod(costParams.r);
-            kinematics_vw = Model('kinematics_vw', f, constraints, costParams,nx,nu);
+            kinematics_vw = Model('kinematics_vw', f, constraints, costParams,nx,nu, stateNames, inputNames);
             
-            % x=[x y theta phi_l], u=[phi_l_dot phi_r_dot]
+            stateNames = ["x" "y" "theta" "phi_l"];
+            inputNames = ["phi_dot_l" "phi_dot_r"];
             f = @(y,u) data.G_y_func(y) * u; %x_dot = f(x,u)            
             uMax = 10*ones(2,1);
             uMin = -uMax;
@@ -58,10 +60,11 @@ classdef Robot
             costParams.q_u = 2e-5*ones(2,1);
             costParams.r = [1 1 2 1];
             costParams.d = 2*prod(costParams.r);
-            kinematics_phidot = Model('kinematics_phidot', f, constraints, costParams,nx,nu);
+            kinematics_phidot = Model('kinematics_phidot', f, constraints, costParams,nx,nu, stateNames, inputNames);
 
             %% Dynamics
-            % x=[x y theta phi_l phi_l_dot phi_r_dot], u=[tau_1 tau_2]
+            stateNames = ["x" "y" "theta" "phi_l" "phi_l_dot" "phi_r_dot"];
+            inputNames = ["phi_dot_l" "phi_dot_r"];
             f_kin = @(y,u) data.G_y_func(y) * [y(5);y(6)];            
             f = @(y,u) [f_kin(y,u);data.Minv_eqM_func(y)*u];
             uMax = 0.2*ones(2,1);
@@ -74,7 +77,7 @@ classdef Robot
             costParams.q_u = 1*ones(2,1);
             costParams.r = [1 1 2 1 1 1];
             costParams.d = 2*prod(costParams.r);
-            dynamics_phidot = Model('dynamics_phidot', f, constraints, costParams,nx,nu);
+            dynamics_phidot = Model('dynamics_phidot', f, constraints, costParams,nx,nu, stateNames, inputNames);
 
        
             % available models

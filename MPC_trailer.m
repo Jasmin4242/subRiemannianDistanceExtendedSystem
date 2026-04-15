@@ -26,17 +26,17 @@ simulator = Simulator(trailer.getModel(), dT);
 horizon = 60;
 mpcController = MPCController(trailer, dT, horizon);
 
-k_sim = 200;
+k_sim = 2; %200;
 [x,u,cost] = simulator.sim_MPC_closedLoop(x0, k_sim,mpcController);
 
 %% postprocessing
 % VISUAlIZER
 visualizer = Visualizer();
+visualizer.animation(x, trailer);
 visualizer.plotStates(x);
 visualizer.plotInputs(u);
 visualizer.plotPath(x);
-visualizer.plotCosts(cost);
-visualizer.animation(x, trailer);   
+visualizer.plotCosts(cost);  
 
 disp('Endzustand')
 disp('x und y')

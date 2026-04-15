@@ -1,15 +1,17 @@
 classdef Model
     properties (SetAccess = private)
         Name
-        f           % struct mit f(x,u)
-        Constraints     % ConstraintSet Objekt
-        CostParameters  % struct oder später eigene Klasse
+        f          
+        Constraints     
+        CostParameters  
         nx
         nu
+        stateNames
+        inputNames
     end
 
     methods
-        function obj = Model(name, f, constraints, costParams, nx, nu)
+        function obj = Model(name, f, constraints, costParams, nx, nu, stateNames, inputNames)
 
             obj.Name = string(name);
             obj.f = f;
@@ -17,6 +19,8 @@ classdef Model
             obj.CostParameters = costParams;
             obj.nx = nx;
             obj.nu =nu;
+            obj.stateNames = stateNames;
+            obj.inputNames = inputNames;
         end
     end
 end

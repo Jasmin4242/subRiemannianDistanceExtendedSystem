@@ -41,8 +41,8 @@ classdef Simulator
                 x_data(kk+1,:) = xcurrent;
                 cost_data(kk) = sol.Jval;
             end
-            x = Trajectoryx(obj.dT, x_data);
-            u = Trajectoryu(obj.dT, u_data);
+            x = Trajectoryx(obj.dT, x_data, obj.Model.stateNames);
+            u = Trajectoryu(obj.dT, u_data, obj.Model.inputNames);
             cost = Trajectorycost(obj.dT,cost_data);
         end
 
