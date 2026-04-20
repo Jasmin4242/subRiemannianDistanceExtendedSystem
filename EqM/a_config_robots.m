@@ -23,7 +23,7 @@ I_wy_val = 0.5*m_val*R_val^2;
 I_wz_val = m_val*(3*R_val^2 + 0.005^2)/12; % wheel inertia around z-axis in kg m^2
 
 % trailer
-b1x_val = 0.195; % hook length in m
+b1x_val = 1;%0.195; % hook length in m
 Mt_val = 0.43; % trailer chassis in kg
 Lt_val = L_val; % trailer axis length in m
 I_tx_val = nan;

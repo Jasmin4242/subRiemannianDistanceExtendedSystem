@@ -1,5 +1,6 @@
 clear all;
 close all;
+addpath(genpath(pwd));
 
 %% user params
 dT = 0.25;
@@ -11,11 +12,12 @@ vehicle = Trailer('trailer');
 % choose the model
 % modelname = 'kinematics_vw';
 % modelname = 'kinematics_phidot';
-modelname = 'dynamics_phidot';
+% modelname = 'dynamics_phidot';
+modelname = 'dynamics_vw';
 
 % git and storing results
-store_git_info = true;
-save_results = true;
+store_git_info = 1;
+save_results = 1;
 
 % choose the initial condition
 if isa(vehicle,'Robot')
@@ -35,8 +37,7 @@ else
 end
 
 %% initialization
-% add paths
-addpath(genpath(pwd));
+% Casadi
 addpath(genpath('/scratch/tmp/jkrauspenhaar/temp/Matlabinstallationen/casadi-3.6.7-linux64-matlab2018b'));
 
 %git

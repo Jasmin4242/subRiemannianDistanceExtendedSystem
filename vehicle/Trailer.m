@@ -101,11 +101,34 @@ classdef Trailer
             costParams.d = prod(costParams.r);
             dynamics_phidot = Model('dynamics_phidot', f, constraints, costParams,nx,nu, stateNames, inputNames);
 
+            stateNames = ["x" "y" "theta" "theta_t" "phi_l" "phi_1_t" "v" "w"];
+            inputNames = ["tau_l" "tau_r"];
+            f_kin = @(y,u) data.G_y_func_v_omega(y) * [y(7);y(8)];            
+            f = @(y,u) [f_kin(y,u);data.Minv_eqM_func_vw(y)*u];
+            uMax = 0.005*ones(2,1);
+            uMin = -uMax;
+            nx = 8;
+            nu = 2;
+            constraints = ConstraintSet(obj, nx, nu, uMin, uMax);
+            costParams.z = [1 0 0 0 0 0 0 0;...
+                            0 0 1 0 0 0 0 0;...
+                            0 1 0 0 0 0 0 0;...
+                            0 b1x 0 -b1x^2 0 0 0 0;...
+                            zeros(1,8);...
+                            zeros(1,8);...
+                            0 0 0 0 0 0 1 0;...
+                            0 0 0 0 0 0 0 1];
+            costParams.q_z = [0.1 0.1 5 5 0 0 0.125*ones(1,2)]';
+            costParams.q_u = 1*ones(2,1);
+            costParams.r = [1 1 2 3 1 1 1 1];
+            costParams.d = prod(costParams.r);
+            dynamics_vw = Model('dynamics_vw', f, constraints, costParams,nx,nu, stateNames, inputNames);
        
             % available models
             obj.AvailableModels('kinematics_vw') = kinematics_vw;
             obj.AvailableModels('kinematics_phidot') = kinematics_phidot;
             obj.AvailableModels('dynamics_phidot') = dynamics_phidot;
+            obj.AvailableModels('dynamics_vw') = dynamics_vw;
         end
 
         function obj = setModel(obj, name)   

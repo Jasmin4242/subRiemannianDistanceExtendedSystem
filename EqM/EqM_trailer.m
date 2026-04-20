@@ -484,12 +484,14 @@ A_Dphi_to_v_val = (1/robot.R)*[1 -0.5*robot.L; 1 0.5*robot.L];
 G_y_subs_no_time_v_omega = G_y_subs_no_time*A_Dphi_to_v_val;
 % G_y_subs_no_time_v_omega = G_y_subs_no_time_v_omega; % do not consider wheel angle
 G_y_func_v_omega = matlabFunction(G_y_subs_no_time_v_omega, 'Vars', {y_});
+M_eqM_func_vw = matlabFunction(M_eqM_subs_no_time*A_Dphi_to_v_val, 'Vars', {y_});
+Minv_eqM_func_vw = matlabFunction(inv(A_Dphi_to_v_val)*Minv_eqM_subs_no_time, 'Vars', {y_});
 
 
 disp('Scucessfully computed the equations of motion for trailer system...');
 
 % store the handles
-save('results/EqM_trailer.mat', 'M_eqM_func','Minv_eqM_func','k_eqM_func', 'q_eqM_func','G_y_func','G_y_func_v_omega',...
+save('results/EqM_trailer.mat', 'M_eqM_func','M_eqM_func_vw','Minv_eqM_func','Minv_eqM_func_vw','k_eqM_func', 'q_eqM_func','G_y_func','G_y_func_v_omega',...
     'G_y_subs_no_time_v_omega', 'G_y_subs_no_time', 'M_eqM_subs_no_time', 'k_eqM_subs_no_time', 'q_eqM_subs_no_time',...
     'y_','s_','x_','x_u_');
 disp('Scucessfully exported the equations of motion for trailer to function handles...');

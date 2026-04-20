@@ -30,14 +30,23 @@ classdef Simulator
             x_data(1,:) = xcurrent;
             u_data = zeros(k_sim,nu);
             cost_data =zeros(k_sim,1);
+            flag_accuracy = 0;
             for kk = 1:k_sim
-                kk
+                if mod(kk,25) == 0
+                    kk
+                end
                 %compute input
                 [u0, sol] = mpcController.computeInput(xcurrent, y_init);
                 u_data(kk,:) = u0;
                 y_init = mpcController.initialGuess(sol);
                 %apply input
                 xcurrent = obj.simstep(xcurrent,u0);
+                if flag_accuracy == 0
+                    if abs(xcurrent(1))<1e-3 && abs(xcurrent(2))<1e-3 && abs(xcurrent(3))<180*1e-3/pi
+                        disp(strcat('sub-millimeter and sub-degree accuracy first reached after ',num2str((kk+1)*obj.dT),'s'))
+                        flag_accuracy = 1;
+                    end
+                end                
                 x_data(kk+1,:) = xcurrent;
                 cost_data(kk) = sol.Jval;
             end
