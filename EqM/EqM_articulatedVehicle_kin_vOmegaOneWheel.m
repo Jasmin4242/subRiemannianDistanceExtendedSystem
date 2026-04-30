@@ -4,7 +4,7 @@
 
 %wheels collapse in the middle
 
-function EqM_articulatedVehicle_kin_vOmega
+function EqM_articulatedVehicle_kin_vOmegaOneWheel
 
 % generalized coordinates
 syms xc(t) yc(t) theta(t) phi1(t) xt(t) yt(t) phi1_t(t) gama(t) % note that here plane=inertial frame (no tilted plane)
@@ -51,12 +51,12 @@ S_tW1toC = S_TtoC * S_tW1toT; % rotation from tW1 to C
 t_W1toC = [0;0;0]; % translation from W1 to C
 % trailer displacements
 t_TtoG_inT = [-l_t; 0; 0];
-t_GtoC_inT = [-l; 0; 0];
+t_GtoC_inC = [-l; 0; 0];
 t_tW1toT_inT = [0; 0; 0];
 t_tW1toC_inT = t_tW1toT_inT + t_TtoG_inT;
 % trailer displacements in C
-t_TtoC_inC = S_TtoC*t_TtoG_inT+t_GtoC_inT;
-t_tW1toC_inC = S_TtoC*t_tW1toC_inT+t_GtoC_inT; %gleich wie t_TtoC_inC, da Räder zusammen fallen
+t_TtoC_inC = S_TtoC*t_TtoG_inT+t_GtoC_inC;
+t_tW1toC_inC = S_TtoC*t_tW1toC_inT+t_GtoC_inC; %gleich wie t_TtoC_inC, da Räder zusammen fallen
 % transformation matrices
 T_W1toC = utils.CoTrafo.homog_trafo(eye(3), t_W1toC)*utils.CoTrafo.homog_trafo(S_W1toC, zeros(3,1)); % trafo from W1 to P
 %
@@ -168,8 +168,8 @@ G_y_alt_transl = formula(G_y_alt_transl);
 % trafo
 A_vomega_to_phidotomega = [1/R 0;0   1];
 %
-col_Dtheta1_v_omega = [-sin(gama)/l_t, (l*cos(gama)+l_t)/l_t];
-col_Dtheta1_Dphi = col_Dtheta1_v_omega / A_vomega_to_phidotomega;
+col_Dgama_v_omega = [-sin(gama)/l_t, (l*cos(gama)+l_t)/l_t];
+col_Dgama_Dphi = col_Dgama_v_omega / A_vomega_to_phidotomega;
 %
 col_Dphi1t_v_omega = 1/R*[1/cos(gama)-sin(gama)*tan(gama), l*cos(gama)*tan(gama)];
 col_Dphi1t_Dphi = col_Dphi1t_v_omega/A_vomega_to_phidotomega;
@@ -177,7 +177,7 @@ col_Dphi1t_Dphi = simplify(col_Dphi1t_Dphi);
 
 G_y = [G_y_alt_transl(1:2,:);...
     0 1;...
-    col_Dtheta1_Dphi; ...
+    col_Dgama_Dphi; ...
     [1, 0];...
     col_Dphi1t_Dphi ];
 % visu: pretty(G_y_alt_transl)
