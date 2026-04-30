@@ -1,0 +1,250 @@
+% script to derive the equations of motion of robot-trailer system 
+% for simulation purposes of the plant 
+% mr, 3.11.2025
+
+%wheels collapse in the middle
+
+function EqM_articulatedVehicle_kin_vOmega
+
+% generalized coordinates
+syms xc(t) yc(t) theta(t) phi1(t) xt(t) yt(t) phi1_t(t) gama(t) % note that here plane=inertial frame (no tilted plane)
+assume([xc(t), yc(t), theta(t), phi1(t), ...
+    xt(t), yt(t), phi1_t(t), gama(t)], 'real')
+y = [xc; yc; theta; gama; phi1; phi1_t];
+assume(y(t), 'real');
+Dy = diff(y,t);
+% generalized velocities
+syms Dphi1(t) omega(t)
+s = [Dphi1; omega];
+assume(s(t), 'real');
+% geometrics
+syms h L Lt R l l_t real % real
+% Lt = L;
+% masses
+syms M Mt m real
+% inertia
+syms I_cx I_cy I_cz real;
+syms I_tx I_ty I_tz real;
+syms I_wx I_wy I_wz real;
+% applied forces and torques
+syms g tau_w1 tau_w2 real
+% u = [tau_w1; tau_w2];
+
+% Constraint on phi2 and phi2t not needed because wheels collapse
+
+%% Position vectors and transformations
+% position vectors in robot (chassis frame) and wheel frame
+r_c_C = [0;0;0]; % chassis vector in chassis COS
+r_ct_T = [0;0;0]; % trailer chassis vector in trailer COS
+r_w1_W1 = [0;0;0]; % wheel 1 vector in wheel 1 COS
+r_tw1_tW1 = [0;0;0]; % trailer wheel 1 vector in trailer wheel 1 COS
+
+% transformation to robot framce (C) from wheel frames
+% rotation matrices
+S_W1toC = utils.CoTrafo.roty_sym(phi1); % rotation from W1 to C
+% rotation matrices trailer
+S_TtoC = utils.CoTrafo.rotz_sym(-gama); % rotation from T to C
+S_tW1toT = utils.CoTrafo.roty_sym(phi1_t); % rotation from tW1 to T
+S_tW1toC = S_TtoC * S_tW1toT; % rotation from tW1 to C
+
+% displacement
+t_W1toC = [0;0;0]; % translation from W1 to C
+% trailer displacements
+t_TtoG_inT = [-l_t; 0; 0];
+t_GtoC_inT = [-l; 0; 0];
+t_tW1toT_inT = [0; 0; 0];
+t_tW1toC_inT = t_tW1toT_inT + t_TtoG_inT;
+% trailer displacements in C
+t_TtoC_inC = S_TtoC*t_TtoG_inT+t_GtoC_inT;
+t_tW1toC_inC = S_TtoC*t_tW1toC_inT+t_GtoC_inT; %gleich wie t_TtoC_inC, da Räder zusammen fallen
+% transformation matrices
+T_W1toC = utils.CoTrafo.homog_trafo(eye(3), t_W1toC)*utils.CoTrafo.homog_trafo(S_W1toC, zeros(3,1)); % trafo from W1 to P
+%
+T_TtoC = utils.CoTrafo.homog_trafo(eye(3), t_TtoC_inC)*utils.CoTrafo.homog_trafo(S_TtoC, zeros(3,1)); % trafo from T to P
+T_tW1toC = utils.CoTrafo.homog_trafo(eye(3), t_tW1toC_inC)*utils.CoTrafo.homog_trafo(S_tW1toC, zeros(3,1)); % trafo from tW1 to P
+
+% wheels depicted in robot frame (C)
+p_w1_C = formula(T_W1toC*[zeros(3,1);1]); % homogeneous coordinates; formula renders symfun as vector to access entries via brackets
+r_w1_C = p_w1_C(1:3); % homogeneous coordinates; 
+% trailer depicted in robot frame
+p_t_C = formula(T_TtoC*[zeros(3,1);1]);
+r_t_C = p_t_C(1:3);
+p_tw1_C = formula(T_tW1toC*[zeros(3,1);1]);
+r_tw1_C = p_tw1_C(1:3);
+
+% transformation to plane frame (P) from robot frame (C)
+S_CtoP = utils.CoTrafo.rotz_sym(theta); % rotation from P to C
+t_C2P = [xc; yc; h]; % translation from P to C
+T_CtoP = utils.CoTrafo.homog_trafo(eye(3), t_C2P)*utils.CoTrafo.homog_trafo(S_CtoP, zeros(3,1)); % trafo from C to P
+% T_P2C = simplify(inv(T_C2P));
+
+% position vectors in plane frame (P)
+p_c_P = formula(T_CtoP*[r_c_C;1]); % chassis
+r_c_P = p_c_P(1:3);
+p_w1_P = formula(T_CtoP*[r_w1_C;1]); % wheel 1 diana
+r_w1_P = p_w1_P(1:3);
+% trailer
+p_t_P = formula(T_CtoP*[r_t_C;1]); % chassis trailer
+r_t_P = simplify(p_t_P(1:3));
+p_tw1_P = formula(T_CtoP*[r_tw1_C;1]); % wheel 1 trailer
+r_tw1_P = simplify(p_tw1_P(1:3));
+
+%% Jacobian matrices
+% translation
+Jac_Transl_c = simplify(jacobian(r_c_P, y));
+Jac_Transl_w1 = simplify(jacobian(r_w1_P, y));
+Jac_Transl_t = simplify(jacobian(r_t_P, y));
+Jac_Transl_tw1 = simplify(jacobian(r_tw1_P, y));
+
+% rotation
+T_CtoP = formula(T_CtoP);
+T_W1toP = formula(T_CtoP*T_W1toC);
+T_TtoP = formula(T_CtoP*T_TtoC);
+T_tW1toP = formula(T_CtoP*T_tW1toC);
+%
+S_CtoP = T_CtoP(1:3, 1:3);
+S_W1toP = T_W1toP(1:3, 1:3);
+S_TtoP = simplify(T_TtoP(1:3, 1:3));
+S_tW1toP = T_tW1toP(1:3, 1:3);
+% skew-symmetric matrices to obtain Jacobi matrices of rotation
+skewsym_c = simplify(diff(S_CtoP, t)*S_CtoP');
+omega_c_P = utils.CoTrafo.roessel(skewsym_c);
+skewsym_w1 = simplify(diff(S_W1toP, t)*S_W1toP');
+omega_w1_P = utils.CoTrafo.roessel(skewsym_w1);
+skewsym_t = simplify(diff(S_TtoP, t)*S_TtoP');
+omega_t_P = utils.CoTrafo.roessel(skewsym_t);
+skewsym_tw1 = simplify(diff(S_tW1toP, t)*S_tW1toP');
+omega_tw1_P = utils.CoTrafo.roessel(skewsym_tw1);
+%
+Jac_Rot_c = simplify(jacobian(omega_c_P, Dy));
+Jac_Rot_c = subs(Jac_Rot_c, conj(y(t)), y(t));
+Jac_Rot_w1 = simplify(jacobian(omega_w1_P, Dy));
+Jac_Rot_w1 = simplify(subs(Jac_Rot_w1, conj(y(t)), y(t)));
+Jac_Rot_t = simplify(jacobian(omega_t_P, Dy));
+Jac_Rot_t = subs(Jac_Rot_t, conj(y(t)), y(t));
+Jac_Rot_tw1 = simplify(jacobian(omega_tw1_P, Dy));
+Jac_Rot_tw1 = simplify(subs(Jac_Rot_tw1, conj(y(t)), y(t)));
+
+%% Nonholonomic constraint and resulting Kinematics
+% transl velocities  of wheels
+v_w1_NHc = formula(Jac_Transl_w1*Dy); % for testing/debugging: subs(v_w1_NHc, [dx dy dz], zeros(1,3))
+v_tw1_NHc = formula(Jac_Transl_tw1*Dy);
+% LHS of NH constraint of each wheel (rhs = 0)
+NHc_w1 = simplify(v_w1_NHc(1)*sin(theta) - v_w1_NHc(2)*cos(theta));
+NHc_tw1 = simplify(v_tw1_NHc(1)*sin(theta-gama) - v_tw1_NHc(2)*cos(theta-gama));
+
+Dy_formula = formula(Dy);
+% "second constraint" / abrollen
+NHc_w1_b = simplify(v_w1_NHc(1)*cos(theta) + v_w1_NHc(2)*sin(theta) ...
+    - Dy_formula(5)*R );
+NHc_tw1_b = simplify(v_tw1_NHc(1)*cos(theta-gama) + v_tw1_NHc(2)*sin(theta-gama) ...
+    - Dy_formula(6)*R );
+% Pfaffian constraint matrix
+a1_w1 = jacobian(NHc_w1, Dy);
+a1_tw1 = jacobian(NHc_tw1, Dy);
+a2_w1 = jacobian(NHc_w1_b, Dy);
+a2_tw1 = jacobian(NHc_tw1_b, Dy);
+%
+A_y = simplify([a1_w1; a2_w1; a1_tw1; a2_tw1]);
+
+% explicit kinematics
+% position of the middle point on the axle
+r_m_P = [xc;...
+    yc ;
+    h];
+v_m_P = simplify(diff(r_m_P, t));
+s_formula = formula(s);
+v_m_P_phi = simplify(subs(v_m_P, diff(theta(t),t), s_formula(2)));
+% from Anschauung
+v_m_P_NH = [R*cos(theta)*(s_formula(1));...
+    R*sin(theta)*(s_formula(1));...
+    0];
+
+% res (umstellen nach Dxc Dyc)
+Res_v_m_P = simplify(v_m_P_phi - v_m_P_NH);
+G_y_alt_transl = simplify(-jacobian(Res_v_m_P, s_formula));
+G_y_alt_transl = formula(G_y_alt_transl);
+
+% trafo
+A_Dphi_to_v = (1/R);
+%
+col_Dtheta1_v_omega = [-sin(gama)/l_t, (l*cos(gama)+l_t)/l_t];
+col_Dtheta1_Dphi = [col_Dtheta1_v_omega(1) / (A_Dphi_to_v), col_Dtheta1_v_omega(2)];
+%
+col_Dphi1t_v_omega = [1/cos(gama)-sin(gama)\l_t, -l_t*tan(gama)+(l*cos(gama)+l_t)/l_t];
+col_Dphi1t_Dphi = [col_Dphi1t_v_omega(1) / (A_Dphi_to_v), col_Dphi1t_v_omega(2)];
+
+G_y = [G_y_alt_transl(1:2,:);...
+    0 1;...
+    col_Dtheta1_Dphi; ...
+    [1, 0];...
+    col_Dphi1t_Dphi ];
+% visu: pretty(G_y_alt_transl)
+% doublecheck: subs(G_y_alt, [dx dy dz], zeros(1,3))
+
+res_check = simplify(formula(A_y)*G_y)
+warning('check res check')
+
+
+%% substitute parameters
+robot_type = 'trailer';
+run('a_config_robots');
+warning('config eher als struct oder aenhliches speichern');
+
+parameters_numeric = [M_val; L_val; I_cx_val; I_cy_val; I_cz_val;...
+    Mt_val; Lt_val; I_tx_val; I_ty_val; I_tz_val;...
+    m_val; R_val; I_wx_val; I_wy_val; I_wz_val;
+    b1x_val];
+parameters_symbolic = [M; L; I_cx; I_cy; I_cz;...
+    Mt; Lt; I_tx; I_ty; I_tz;...
+    m; R; I_wx; I_wy; I_wz;...
+    b1x];
+
+syms xc_ yc_ theta_ theta1_ phi1_ phi1t_ real
+syms Dphi1_ Dphi2_ real
+y_ = [xc_ yc_ theta_ theta1_ phi1_ phi1t_]';
+s_ = [Dphi1_ Dphi2_]';
+x_ = [y_; s_];
+xc = [yc; s];
+%
+x_u_ = [x_; tau_w1; tau_w2];
+% x_u = [x; tau_w1; tau_w2];
+
+% kinematics
+G_y_subs = formula(subs(G_y, parameters_symbolic, parameters_numeric));
+G_y_subs_no_time = subs(G_y_subs, yc, y_);
+% dynamics
+M_eqM_subs = formula(subs(M_eqM, parameters_symbolic, parameters_numeric));
+M_eqM_subs_no_time = subs(M_eqM_subs, yc, y_);
+Minv_eqM_subs_no_time = inv(M_eqM_subs_no_time);
+k_eqM_subs = formula(subs(k_eqM, parameters_symbolic, parameters_numeric));
+k_eqM_subs_no_time = subs(k_eqM_subs, xc, x_);
+q_eqM_subs = formula(subs(q_eqM, parameters_symbolic, parameters_numeric));
+q_eqM_subs_no_time = subs(q_eqM_subs, xc, x_);
+
+% export ingredients of dynamics to Matlab function handles
+G_y_subs_no_time = G_y_subs_no_time; % do not consider wheel angle
+G_y_func = matlabFunction(G_y_subs_no_time, 'Vars', {y_(1:4)});
+M_eqM_func = matlabFunction(M_eqM_subs_no_time, 'Vars', {y_});
+Minv_eqM_func = matlabFunction(Minv_eqM_subs_no_time, 'Vars', {y_});
+k_eqM_func = matlabFunction(k_eqM_subs_no_time, 'Vars', {x_});
+q_eqM_func = matlabFunction(q_eqM_subs_no_time, 'Vars', {x_u_});
+
+% trafo to v and omega
+A_Dphi_to_v_val = (1/robot.R)*[1 -0.5*robot.L; 1 0.5*robot.L];
+G_y_subs_no_time_v_omega = G_y_subs_no_time*A_Dphi_to_v_val;
+% G_y_subs_no_time_v_omega = G_y_subs_no_time_v_omega; % do not consider wheel angle
+G_y_func_v_omega = matlabFunction(G_y_subs_no_time_v_omega, 'Vars', {y_});
+M_eqM_func_vw = matlabFunction(M_eqM_subs_no_time*A_Dphi_to_v_val, 'Vars', {y_});
+Minv_eqM_func_vw = matlabFunction(inv(A_Dphi_to_v_val)*Minv_eqM_subs_no_time, 'Vars', {y_});
+
+
+disp('Scucessfully computed the kinematics for articulated vehicle with inputs v and gamma_dot...');
+
+% store the handles
+save('results/EqM_trailer.mat', 'M_eqM_func','M_eqM_func_vw','Minv_eqM_func','Minv_eqM_func_vw','k_eqM_func', 'q_eqM_func','G_y_func','G_y_func_v_omega',...
+    'G_y_subs_no_time_v_omega', 'G_y_subs_no_time', 'M_eqM_subs_no_time', 'k_eqM_subs_no_time', 'q_eqM_subs_no_time',...
+    'y_','s_','x_','x_u_');
+disp('Scucessfully exported the equations of motion for trailer to function handles...');
+
+end

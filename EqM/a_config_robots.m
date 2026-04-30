@@ -23,12 +23,16 @@ I_wy_val = 0.5*m_val*R_val^2;
 I_wz_val = m_val*(3*R_val^2 + 0.005^2)/12; % wheel inertia around z-axis in kg m^2
 
 % trailer
-b1x_val = 1;%0.195; % hook length in m
+b1x_val = 0.195;%0.195; % hook length in m
 Mt_val = 0.43; % trailer chassis in kg
 Lt_val = L_val; % trailer axis length in m
 I_tx_val = nan;
 I_ty_val = nan;
 I_tz_val = Mt_val*(0.1^2 + 0.16^2)/12; % chassis inertia around z-axis in kg m^2
+% for articulated vehicle
+l_val = 0.1;
+l_t_val = 0.1;
+
 
 % car
 ell_val = 0.14; % distance between rear and front axle in m
