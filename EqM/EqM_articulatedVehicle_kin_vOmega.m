@@ -267,9 +267,9 @@ parameters_symbolic = [M; L; I_cx; I_cy; I_cz;...
     m; R; I_wx; I_wy; I_wz;...
     l; l_t];
 
-syms xc_ yc_ theta_ theta1_ phi1_ phi1t_ real
+syms xc_ yc_ theta_ gama_ phi1_ phi1t_ real
 syms Dphi1_ Dphi2_ real
-y_ = [xc_ yc_ theta_ theta1_ phi1_ phi1t_]';
+y_ = [xc_ yc_ theta_ gama_ phi1_ phi1t_]';
 s_ = [Dphi1_ Dphi2_]';
 x_ = [y_; s_];
 xc = [yc; s];
@@ -287,7 +287,7 @@ G_y_subs_no_time = G_y_subs_no_time; % do not consider wheel angle
 G_y_func = matlabFunction(G_y_subs_no_time, 'Vars', {y_(1:4)});
 
 % trafo to v and omega
-A_Dphi_to_v_val = [1/robot.R 0;0   1];
+A_Dphi_to_v_val = (1/robot.R)*[1 -0.5*robot.L; 1 0.5*robot.L];
 G_y_subs_no_time_v_omega = G_y_subs_no_time*A_Dphi_to_v_val;
 % G_y_subs_no_time_v_omega = G_y_subs_no_time_v_omega; % do not consider wheel angle
 G_y_func_v_omega = matlabFunction(G_y_subs_no_time_v_omega, 'Vars', {y_});

@@ -3,7 +3,7 @@
 % mr, 3.11.2025
 
 
-function EqM_articulatedVehicle_kin_vOmega
+function EqM_articulatedVehicle
 
 % generalized coordinates
 syms xc(t) yc(t) theta(t) phi1(t) phi2(t) xt(t) yt(t) phi1t(t) phi2t(t) gama(t) % note that here plane=inertial frame (no tilted plane)
@@ -26,7 +26,7 @@ syms I_cx I_cy I_cz real;
 syms I_tx I_ty I_tz real;
 syms I_wx I_wy I_wz real;
 % applied forces and torques
-syms g tau_w1 tau_w2 real
+syms g tau_w1 tau_w2 tau_gama real
 % u = [tau_w1; tau_w2];
 
 %% Constraint on phi2 and phi2t
@@ -253,6 +253,204 @@ res_check = simplify(formula(A_y)*G_y)
 warning('check res check')
 
 
+%% Dynamics
+% matrices L
+L_Transl_c = formula(simplify(Jac_Transl_c*G_y));
+L_Transl_t = formula(simplify(Jac_Transl_t*G_y));
+L_Transl_w1 = formula(simplify(Jac_Transl_w1*G_y));
+L_Transl_w2 = formula(simplify(Jac_Transl_w2*G_y));
+L_Transl_tw1 = formula(simplify(Jac_Transl_tw1*G_y));
+L_Transl_tw2 = formula(simplify(Jac_Transl_tw2*G_y));
+L_Rot_c = formula(simplify(Jac_Rot_c*G_y));
+L_Rot_t = formula(simplify(Jac_Rot_t*G_y));
+L_Rot_w1 = formula(simplify(Jac_Rot_w1*G_y));
+L_Rot_w1 = simplify(subs(L_Rot_w1, conj(y(t)), y(t)));
+L_Rot_w2 = formula(simplify(Jac_Rot_w2*G_y));
+L_Rot_w2 = simplify(subs(L_Rot_w2, conj(y(t)), y(t)));
+L_Rot_tw1 = formula(simplify(Jac_Rot_tw1*G_y));
+L_Rot_tw1 = simplify(subs(L_Rot_tw1, conj(y(t)), y(t)));
+L_Rot_tw2 = formula(simplify(Jac_Rot_tw2*G_y));
+L_Rot_tw2 = simplify(subs(L_Rot_tw2, conj(y(t)), y(t)));
+
+% global mass matrix
+M_c = M*eye(3);
+M_t = Mt*eye(3);
+M_w1 = m*eye(3);
+M_w2 = m*eye(3);
+M_tw1 = m*eye(3);
+M_tw2 = m*eye(3);
+
+I_c_C = diag([I_cx I_cy I_cz]);
+I_t_T = diag([I_tx I_ty I_tz]);
+I_w_W = diag([I_wx I_wy I_wz]);
+% transformation of inertia matrix
+I_c_P = S_CtoP*I_c_C*S_CtoP';
+I_c_P = simplify(subs(I_c_P, conj(y(t)), y(t)));
+%
+I_t_P = S_TtoP*I_t_T*S_TtoP';
+I_t_P = simplify(subs(I_t_P, conj(y(t)), y(t)));
+%
+I_w1_P = S_W1toP*I_w_W*S_W1toP';
+I_w2_P = S_W2toP*I_w_W*S_W2toP';
+% warning('why trafo not from wheel frame but from chassis frame sufficient')
+I_w1_P = simplify(subs(I_w1_P, conj(y(t)), y(t)));
+I_w2_P = simplify(subs(I_w2_P, conj(y(t)), y(t)));
+%
+I_tw1_P = S_tW1toP*I_w_W*S_tW1toP';
+I_tw2_P = S_tW2toP*I_w_W*S_tW2toP';
+% warning('why trafo not from wheel frame but from chassis frame sufficient')
+I_tw1_P = simplify(subs(I_tw1_P, conj(y(t)), y(t)));
+I_tw2_P = simplify(subs(I_tw2_P, conj(y(t)), y(t)));
+%
+I_w1 = I_w1_P;
+I_w2 = I_w2_P;
+I_tw1 = I_tw1_P;
+I_tw2 = I_tw2_P;
+M_bar = blkdiag(M_c, I_c_P, M_t, I_t_P,...
+    M_w1, I_w1, M_w2, I_w2, M_tw1, I_tw1, M_tw2, I_tw2);
+
+% Coriolis and centrifugal
+% as in holonomic systems
+% a_local_c_hol = diff(Jac_Transl_c, t)*diff(y,t);
+% a_local_w1_hol = diff(Jac_Transl_w1, t)*diff(y,t);
+% a_local_w2_hol = diff(Jac_Transl_w2, t)*diff(y,t);
+% cf. EqM nonhol
+v_c = Jac_Transl_c*G_y*s;
+v_t = Jac_Transl_t*G_y*s;
+v_w1 = Jac_Transl_w1*G_y*s;
+v_w2 = Jac_Transl_w2*G_y*s;
+v_tw1 = Jac_Transl_tw1*G_y*s;
+v_tw2 = Jac_Transl_tw2*G_y*s;
+omega_c = Jac_Rot_c*G_y*s;
+omega_t = Jac_Rot_t*G_y*s;
+omega_w1 = Jac_Rot_w1*G_y*s;
+omega_w2 = Jac_Rot_w2*G_y*s;
+omega_tw1 = Jac_Rot_tw1*G_y*s;
+omega_tw2 = Jac_Rot_tw2*G_y*s;
+% doublecheck
+L_Transl_c_alt = jacobian( v_c, s); % aternative computation
+L_Transl_t_alt = jacobian( v_t, s); % aternative computation
+L_Transl_w1_alt = simplify(jacobian( v_w1, s));
+L_Transl_w2_alt = simplify(jacobian( v_w2, s));
+L_Transl_tw1_alt = simplify(jacobian( v_tw1, s));
+L_Transl_tw2_alt = simplify(jacobian( v_tw2, s));
+% simplify(L_Transl_c - L_Transl_c_alt)
+% simplify(L_Transl_t - L_Transl_t_alt)
+% simplify(L_Transl_w1 - L_Transl_w1_alt)
+% simplify(L_Transl_w2 - L_Transl_w2_alt)
+% simplify(L_Transl_tw1 - L_Transl_tw1_alt)
+% simplify(L_Transl_tw2 - L_Transl_tw2_alt)
+
+% local accelerations for nonholonomic systems
+a_local_c = simplify(jacobian(v_c, y)*Dy);
+a_local_t = simplify(jacobian(v_t, y)*Dy);
+a_local_w1 = jacobian(v_w1, y)*Dy;
+a_local_w2 = jacobian(v_w2, y)*Dy;
+a_local_tw1 = jacobian(v_tw1, y)*Dy;
+a_local_tw2 = jacobian(v_tw2, y)*Dy;
+alpha_local_c = simplify(jacobian(omega_c, y)*Dy);
+alpha_local_t = simplify(jacobian(omega_t, y)*Dy);
+alpha_local_w1 = jacobian(omega_w1, y)*Dy;
+alpha_local_w2 = jacobian(omega_w2, y)*Dy;
+alpha_local_tw1 = jacobian(omega_tw1, y)*Dy;
+alpha_local_tw2 = jacobian(omega_tw2, y)*Dy;
+% doublechek
+a_local_c_alt = simplify(diff(L_Transl_c, t)*s);
+a_local_t_alt = simplify(diff(L_Transl_t, t)*s);
+a_local_w1_alt = simplify(diff(L_Transl_w1, t)*s);
+a_local_w2_alt = simplify(diff(L_Transl_w2, t)*s);
+a_local_tw1_alt = simplify(diff(L_Transl_tw1, t)*s);
+a_local_tw2_alt = simplify(diff(L_Transl_tw2, t)*s);
+alpha_local_c_alt = simplify(diff(L_Rot_c, t)*s);
+alpha_local_t_alt = simplify(diff(L_Rot_t, t)*s);
+alpha_local_w1_alt = simplify(diff(L_Rot_w1, t)*s);
+alpha_local_w2_alt = simplify(diff(L_Rot_w2, t)*s);
+alpha_local_tw1_alt = simplify(diff(L_Rot_tw1, t)*s);
+alpha_local_tw2_alt = simplify(diff(L_Rot_tw2, t)*s);
+% a_local_c - a_local_c_alt
+% a_local_t - a_local_t_alt
+% a_local_w1 - a_local_w1_alt
+% a_local_w2 - a_local_w2_alt
+% simplify(a_local_tw1 - a_local_tw1_alt)
+% simplify(a_local_tw2 - a_local_tw2_alt)
+
+% assume(theta(t), 'real')
+res_alpha_c = simplify(alpha_local_c - alpha_local_c_alt);
+res_alpha_c = subs(res_alpha_c, conj(theta(t)), theta(t));  % manually assume real
+res_alpha_t = simplify(alpha_local_t - alpha_local_t_alt);
+res_alpha_t = subs(res_alpha_t, conj(theta(t)), theta(t));
+%
+res_alpha_w1 =  simplify(alpha_local_w1 - alpha_local_w1_alt);
+res_alpha_w1 = subs(res_alpha_w1, conj(y(t)), y(t));
+res_alpha_w1 = simplify(subs(res_alpha_w1, conj(diff(y(t), t)), diff(y(t), t)));
+res_alpha_w2 = simplify(alpha_local_w2 - alpha_local_w2_alt);
+res_alpha_w2 = subs(res_alpha_w2, conj(y(t)), y(t));
+res_alpha_w2 = simplify(subs(res_alpha_w2, conj(diff(y(t), t)), diff(y(t), t)));
+%
+res_alpha_tw1 =  simplify(alpha_local_tw1 - alpha_local_tw1_alt);
+res_alpha_tw1 = subs(res_alpha_tw1, conj(y(t)), y(t));
+res_alpha_tw1 = simplify(subs(res_alpha_tw1, conj(diff(y(t), t)), diff(y(t), t)));
+res_alpha_tw2 = simplify(alpha_local_tw2 - alpha_local_tw2_alt);
+res_alpha_tw2 = subs(res_alpha_tw2, conj(y(t)), y(t));
+res_alpha_tw2 = simplify(subs(res_alpha_tw2, conj(diff(y(t), t)), diff(y(t), t)));
+
+% vector of Coriolis and centrifugal
+omega_local_c = zeros(3,1);
+omega_local_t = zeros(3,1);
+omega_local_w1 = zeros(3,1);
+omega_local_w2 = zeros(3,1);
+omega_local_tw1 = zeros(3,1);
+omega_local_tw2 = zeros(3,1);
+k_c = [M*a_local_c; I_c_P*alpha_local_c + skewsym_c*I_c_P*omega_local_c];
+k_t = [Mt*a_local_t; I_t_P*alpha_local_t + skewsym_t*I_t_P*omega_local_t];
+k_w1 = [m*a_local_w1; I_w1*alpha_local_w1 + skewsym_w1*I_w1*omega_local_w1];
+k_w2 = [m*a_local_w2; I_w2*alpha_local_w2 + skewsym_w2*I_w2*omega_local_w2];
+k_tw1 = [m*a_local_tw1; I_tw1*alpha_local_tw1 + skewsym_tw1*I_tw1*omega_local_tw1];
+k_tw2 = [m*a_local_tw2; I_tw2*alpha_local_tw2 + skewsym_tw2*I_tw2*omega_local_tw2];
+k_bar = [k_c; k_t; k_w1; k_w2;  k_tw1; k_tw2];
+k_bar = subs(k_bar, conj(y(t)), y(t));
+k_bar = simplify(subs(k_bar, conj(diff(y(t), t)), diff(y(t), t)));
+
+% applied forces and torques
+f_appl_c = [0; 0; -M*g];
+f_appl_t = [0; 0; -Mt*g];
+f_appl_w1 = [0; 0; -m*g];
+f_appl_w2 = [0; 0; -m*g];
+f_appl_tw1 = [0; 0; -m*g];
+f_appl_tw2 = [0; 0; -m*g];
+ell_appl_c = S_CtoP*[0; 0; tau_gama];
+ell_appl_t = S_CtoP*S_TtoC*[0; 0; -tau_gama];
+ell_appl_w1 = S_CtoP*S_W1toC*[0; tau_w1; 0];
+ell_appl_w2 = S_CtoP*S_W2toC*[0; tau_w2; 0];
+ell_appl_tw1 = zeros(3,1);
+ell_appl_tw2 = zeros(3,1);
+% resulting vector
+qbar_a = [f_appl_c; ell_appl_c; f_appl_t; ell_appl_t;...
+    f_appl_w1; ell_appl_w1; f_appl_w2; ell_appl_w2;...
+    f_appl_tw1; ell_appl_tw1; f_appl_tw2; ell_appl_tw2];
+qbar_a = subs(qbar_a, conj(y(t)), y(t));
+qbar_a = simplify(subs(qbar_a, conj(diff(y(t), t)), diff(y(t), t)));
+
+% (Jacobian) velocity matrix
+L_bar = [L_Transl_c; L_Rot_c; L_Transl_t; L_Rot_t;...
+    L_Transl_w1; L_Rot_w1; L_Transl_w2; L_Rot_w2;...
+    L_Transl_tw1; L_Rot_tw1; L_Transl_tw2; L_Rot_tw2];
+L_bar = subs(L_bar, conj(y(t)), y(t));
+L_bar = simplify(subs(L_bar, conj(diff(y(t), t)), diff(y(t), t)));
+
+%% Equations of Motion
+M_eqM = simplify(L_bar'*M_bar*L_bar);
+M_eqM = subs(M_eqM, conj(y(t)), y(t));
+M_eqM = simplify(subs(M_eqM, conj(diff(y(t), t)), diff(y(t), t)));
+%
+k_eqM = simplify(L_bar'*k_bar);
+k_eqM = subs(k_eqM, conj(y(t)), y(t));
+k_eqM = simplify(subs(k_eqM, conj(diff(y(t), t)), diff(y(t), t)));
+%
+q_eqM = simplify(L_bar'*qbar_a);
+q_eqM = subs(q_eqM, conj(y(t)), y(t));
+q_eqM = simplify(subs(q_eqM, conj(diff(y(t), t)), diff(y(t), t)));
+
 %% substitute parameters
 robot_type = 'trailer';
 run('a_config_robots');
@@ -267,37 +465,52 @@ parameters_symbolic = [M; L; I_cx; I_cy; I_cz;...
     m; R; I_wx; I_wy; I_wz;...
     l; l_t];
 
-syms xc_ yc_ theta_ theta1_ phi1_ phi1t_ real
+syms xc_ yc_ theta_ gama_ phi1_ phi1t_ real
 syms Dphi1_ Dphi2_ real
-y_ = [xc_ yc_ theta_ theta1_ phi1_ phi1t_]';
+y_ = [xc_ yc_ theta_ gama_ phi1_ phi1t_]';
 s_ = [Dphi1_ Dphi2_]';
 x_ = [y_; s_];
-xc = [yc; s];
+x = [y; s];
 %
-x_u_ = [x_; tau_w1; tau_w2];
+x_u_ = [x_; tau_w1; tau_w2; tau_gama];
 % x_u = [x; tau_w1; tau_w2];
 
 % kinematics
 G_y_subs = formula(subs(G_y, parameters_symbolic, parameters_numeric));
 G_y_subs_no_time = subs(G_y_subs, y, y_);
 % dynamics
+M_eqM_subs = formula(subs(M_eqM, parameters_symbolic, parameters_numeric));
+M_eqM_subs_no_time = subs(M_eqM_subs, y, y_);
+Minv_eqM_subs_no_time = inv(M_eqM_subs_no_time);
+k_eqM_subs = formula(subs(k_eqM, parameters_symbolic, parameters_numeric));
+k_eqM_subs_no_time = subs(k_eqM_subs, x, x_);
+q_eqM_subs = formula(subs(q_eqM, parameters_symbolic, parameters_numeric));
+q_eqM_subs_no_time = subs(q_eqM_subs, x, x_);
 
 % export ingredients of dynamics to Matlab function handles
 G_y_subs_no_time = G_y_subs_no_time; % do not consider wheel angle
 G_y_func = matlabFunction(G_y_subs_no_time, 'Vars', {y_(1:4)});
+M_eqM_func = matlabFunction(M_eqM_subs_no_time, 'Vars', {y_});
+Minv_eqM_func = matlabFunction(Minv_eqM_subs_no_time, 'Vars', {y_});
+k_eqM_func = matlabFunction(k_eqM_subs_no_time, 'Vars', {x_});
+q_eqM_func = matlabFunction(q_eqM_subs_no_time, 'Vars', {x_u_});
 
 % trafo to v and omega
-A_Dphi_to_v_val = [1/robot.R 0;0   1];
+A_Dphi_to_v_val = (1/robot.R)*[1 -0.5*robot.L; 1 0.5*robot.L];
 G_y_subs_no_time_v_omega = G_y_subs_no_time*A_Dphi_to_v_val;
 % G_y_subs_no_time_v_omega = G_y_subs_no_time_v_omega; % do not consider wheel angle
 G_y_func_v_omega = matlabFunction(G_y_subs_no_time_v_omega, 'Vars', {y_});
+M_eqM_func_vw = matlabFunction(A_Dphi_to_v_val'*M_eqM_subs_no_time*A_Dphi_to_v_val, 'Vars', {y_});
+Minv_eqM_func_vw = matlabFunction(inv(A_Dphi_to_v_val'*M_eqM_subs_no_time*A_Dphi_to_v_val), 'Vars', {y_});
+q_eqM_func_vw = matlabFunction(A_Dphi_to_v_val'*q_eqM_subs_no_time, 'Vars', {x_u_});
 
 disp('Scucessfully computed the kinematics for articulated vehicle with inputs v and gamma_dot...');
 
+
 % store the handles
-save('results/EqM_articulatedVehicle_kin_vOmegaOneWheel.mat', 'G_y_func','G_y_func_v_omega',...
-    'G_y_subs_no_time_v_omega', 'G_y_subs_no_time',...
+save('results/EqM_articulatedVehicle.mat', 'M_eqM_func','M_eqM_func_vw','Minv_eqM_func','Minv_eqM_func_vw','q_eqM_func_vw','k_eqM_func', 'q_eqM_func','G_y_func','G_y_func_v_omega',...
+    'G_y_subs_no_time_v_omega', 'G_y_subs_no_time', 'M_eqM_subs_no_time', 'k_eqM_subs_no_time', 'q_eqM_subs_no_time',...
     'y_','s_','x_','x_u_');
-disp('Scucessfully exported the equations of motion for trailer to function handles...');
+disp('Scucessfully exported the equations of motion for articulated vehicle to function handles...');
 
 end

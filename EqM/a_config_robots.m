@@ -30,8 +30,8 @@ I_tx_val = nan;
 I_ty_val = nan;
 I_tz_val = Mt_val*(0.1^2 + 0.16^2)/12; % chassis inertia around z-axis in kg m^2
 % for articulated vehicle
-l_val = 0.1;
-l_t_val = 0.1;
+l_val = b1x_val;
+l_t_val = b1x_val;
 
 
 % car
