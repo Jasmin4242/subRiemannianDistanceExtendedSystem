@@ -80,8 +80,8 @@ classdef Trailer
             %% Dynamics
             stateNames = ["x" "y" "theta" "theta_t" "phi_l" "phi_1_t" "phi_l_dot" "phi_r_dot"];
             inputNames = ["tau_l" "tau_r"];
-            f_kin = @(y,u) data.G_y_func(y) * [y(7);y(8)];            
-            f = @(y,u) [f_kin(y,u);data.Minv_eqM_func(y)*u];
+            f_kin = @(y,u) data.G_y_func(y) * [y(7);y(8)]; 
+            f = @(y,u) [f_kin(y,u);data.Minv_eqM_func(y)*data.q_eqM_func([y; u])];
             uMax = 0.02*ones(2,1);
             uMin = -uMax;
             nx = 8;
@@ -103,8 +103,8 @@ classdef Trailer
 
             stateNames = ["x" "y" "theta" "theta_t" "phi_l" "phi_1_t" "v" "w"];
             inputNames = ["tau_l" "tau_r"];
-            f_kin = @(y,u) data.G_y_func_v_omega(y) * [y(7);y(8)];            
-            f = @(y,u) [f_kin(y,u);data.Minv_eqM_func_vw(y)*u];
+            f_kin = @(y,u) data.G_y_func_v_omega(y) * [y(7);y(8)]; 
+            f = @(y,u) [f_kin(y,u);data.Minv_eqM_func_vw(y)*data.q_eqM_func_vw([y; u])];
             uMax = 0.005*ones(2,1);
             uMin = -uMax;
             nx = 8;

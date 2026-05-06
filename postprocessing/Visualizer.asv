@@ -94,8 +94,8 @@ classdef Visualizer
     methods (Access = private)
         function animation_robot(obj,trajectoryx, vehicle,save_video)
             if save_video
-                videoName = vehicle.Name;
-                v = VideoWriter(strcat('results/',videoName,'.avi'), 'Motion JPEG AVI');
+                videoname = vehicle.Name;
+                v = VideoWriter(strcat('results/',videoName), 'MPEG-4');
                 v.FrameRate = 30;
                 open(v);
             end
@@ -154,7 +154,7 @@ classdef Visualizer
         
                 drawnow;
 
-                if save_video
+                if saveVideo
                     frame = getframe(gcf);
                     writeVideo(v, frame);
                 end
@@ -165,14 +165,7 @@ classdef Visualizer
 
 
 
-        function animation_trailer(obj,trajectoryx, vehicle,save_video)
-            if save_video
-                videoName = vehicle.Name;
-                v = VideoWriter(strcat('results/',videoName,'.avi'), 'Motion JPEG AVI');
-                v.FrameRate = 30;
-                open(v);
-            end
-
+        function animation_trailer(obj,trajectoryx, vehicle)
             x = trajectoryx.X;          
 
             x_robot = x(:,1);
@@ -257,24 +250,11 @@ classdef Visualizer
                     'YData', [p_trailer(2), p_trailer(2) + dir_len_trailer*sin(theta_trailer(k))]);
         
                 drawnow;
-
-                if save_video
-                    frame = getframe(gcf);
-                    writeVideo(v, frame);
-                end
-
                 pause(0.03);
             end
         end
 
-        function animation_articulatedVehicle(obj,trajectoryx, vehicle, save_video)
-            if save_video
-                videoName = vehicle.Name;
-                v = VideoWriter(strcat('results/',videoName,'.avi'), 'Motion JPEG AVI');
-                v.FrameRate = 30;
-                open(v);
-            end
-
+        function animation_articulatedVehicle(obj,trajectoryx, vehicle)
             x = trajectoryx.X;          
 
             x_robot = x(:,1);
@@ -377,12 +357,6 @@ classdef Visualizer
                     'YData', [p_trailer(2), p_trailer(2) + dir_len_trailer*sin(theta_trailer(k))]);
         
                 drawnow;
-                
-                if save_video
-                    frame = getframe(gcf);
-                    writeVideo(v, frame);
-                end
-
                 pause(0.03);
             end
         end

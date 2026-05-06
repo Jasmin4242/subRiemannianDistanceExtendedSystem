@@ -70,12 +70,12 @@ classdef Simulator
             xk = x0(:);
 
             for k = 1:N
-                uk = inputTrajectory.getInputk(k);
-                xk = obj.simstep(xk, uk);
+                uk = inputTrajectory.U(k,:);
+                xk = obj.simstep(xk, uk');
                 X(k+1,:) = xk.';
             end
 
-            outputTrajectory = Trajectoryx(obj.dT,X);
+            outputTrajectory = Trajectoryx(obj.dT,X,obj.Model.stateNames);
         end
 
         function xNext = simstep(obj, x, u)

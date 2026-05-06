@@ -5,19 +5,21 @@ addpath(genpath(pwd));
 %% user params
 dT = 0.25;
 
+save_results = false;
+store_git_info = false;
+save_video = true;
+
 % choose the vehicle
-vehicle = Trailer('trailer');
+vehicle = ArticulatedVehicle('artVeh');
+% vehicle = Trailer('trailer');
 % vehicle = Robot('DIANA');
 
 % choose the model
 % modelname = 'kinematics_vw';
 % modelname = 'kinematics_phidot';
-% modelname = 'dynamics_phidot';
-modelname = 'dynamics_vw';
+modelname = 'dynamics_phidot';
+% modelname = 'dynamics_vw';
 
-% git and storing results
-store_git_info = 1;
-save_results = 1;
 
 % choose the initial condition
 if isa(vehicle,'Robot')
@@ -28,7 +30,13 @@ if isa(vehicle,'Robot')
     end
 elseif isa(vehicle,'Trailer')
     if startsWith(modelname, 'dynamics')
-        x0 = [-0.6; -0.75; 0; 0; 0; 0; 0; 0];
+        x0 = [-0.6; -0.75; 0; 0; 0; 0; 0.1; 0.1];
+    else
+        x0 = [-0.6; -0.75; 0; 0; 0; 0];
+    end    
+elseif isa(vehicle,'ArticulatedVehicle')
+    if startsWith(modelname, 'dynamics')
+        x0 = [-0.6; -0.75; 0; 0; 0; 0; 0.5; 0.5];
     else
         x0 = [-0.6; -0.75; 0; 0; 0; 0];
     end    
@@ -51,21 +59,29 @@ end
 vehicle = vehicle.setModel(modelname);
 simulator = Simulator(vehicle.getModel(), dT);
 
-%% MPC
-horizon = 60;
-mpcController = MPCController(vehicle, dT, horizon);
 
-k_sim = 300;
-[x,u,cost] = simulator.sim_MPC_closedLoop(x0, k_sim,mpcController);
+%% open-loop simulation
+% U_data = repmat([0.00001 -0.00001 0], 100, 1); %Roboter dreht nach rechts
+U_data = repmat([0 0 0.0001], 100, 1); %Gelenk wird aktuiert in positive Richtung
+u = Trajectoryu(dT, U_data,vehicle.getModel().inputNames, 0);
+x = simulator.simulate(x0, u);
+
+
+%% MPC
+% horizon = 60;
+% mpcController = MPCController(vehicle, dT, horizon);
+% 
+% k_sim = 300;
+% [x,u,cost] = simulator.sim_MPC_closedLoop(x0, k_sim,mpcController);
 
 %% postprocessing
 % VISUAlIZER
 visualizer = Visualizer();
-visualizer.animation(x, vehicle);
+visualizer.animation(x, vehicle, save_video);
 visualizer.plotStates(x);
 visualizer.plotInputs(u);
 % visualizer.plotPath(x);
-visualizer.plotCosts(cost);  
+% visualizer.plotCosts(cost);  
 
 %% store results
 if save_results == 1    
