@@ -5,8 +5,8 @@ addpath(genpath(pwd));
 %% user params
 dT = 0.25;
 
-save_results = false;
-store_git_info = false;
+save_results = true;
+store_git_info = true;
 save_video = 0;
 
 % choose the vehicle
