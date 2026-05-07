@@ -6,7 +6,8 @@ addpath(genpath(pwd));
 dT = 0.25;
 
 save_results = false;
-store_git_
+store_git_info = false;
+save_video = true;
 
 % choose the vehicle
 vehicle = ArticulatedVehicle('artVeh');
@@ -60,9 +61,10 @@ simulator = Simulator(vehicle.getModel(), dT);
 
 
 %% open-loop simulation
-% U_data = repmat([0.00001 -0.00001 0], 100, 1); %Roboter dreht nach rechts
-U_data = repmat([0 0 0.0001], 100, 1); %Gelenk wird aktuiert in positive Richtung
-u = Trajectoryu(dT, U_data,vehicle.getModel().inputNames, 0)
+% U_data = repmat([-0.00003 0.00003 0], 100, 1); %Roboter dreht nach links
+% U_data = repmat([0 0 0.0001], 100, 1); %Gelenk wird aktuiert in positive Richtung
+U_data = repmat([-0.00003 0.00003 -0.0001], 100, 1); %gegensätzliche Bewegung
+u = Trajectoryu(dT, U_data,vehicle.getModel().inputNames, 0);
 x = simulator.simulate(x0, u);
 
 
@@ -76,8 +78,8 @@ x = simulator.simulate(x0, u);
 %% postprocessing
 % VISUAlIZER
 visualizer = Visualizer();
-visualizer.animation(x, vehicle);
-visualizer.plotStates(x);
+visualizer.animation(x, vehicle, save_video);
+aktvisualizer.plotStates(x);
 visualizer.plotInputs(u);
 % visualizer.plotPath(x);
 % visualizer.plotCosts(cost);  
