@@ -10,7 +10,7 @@ close all;
 n=4;
 
 %% Erstellen von X1 und X2
-l = sym('l','real');
+sym('l','real');
 l_t=sym('l_t','real');
 
 syms x1 x2 x3 x4;
@@ -163,7 +163,7 @@ z2_von_x=subs(z2_von_y,[y1 y2 y3 y4],[y_von_x(1) y_von_x(2) y_von_x(3) y_von_x(4
 z3_von_x=subs(z3_von_y,[y1 y2 y3 y4],[y_von_x(1) y_von_x(2) y_von_x(3) y_von_x(4)]);
 z4_von_x=subs(z4_von_y,[y1 y2 y3 y4],[y_von_x(1) y_von_x(2) y_von_x(3) y_von_x(4)]);
 
-z_von_x=[z1_von_x;z2_von_x;z3_von_x;z4_von_x]
+z_von_x=[z1_von_x;z2_von_x;z3_von_x;z4_von_x];
 
 %umgekehrte Transformation rausfinden, x1(z1,z2,z3,z4)
 syms z1 z2 z3 z4 
