@@ -70,7 +70,7 @@ classdef Visualizer
                 obj.animation_robot(trajectoryx, vehicle,save_video) 
             elseif isa(vehicle,'Trailer')
                 obj.animation_trailer(trajectoryx, vehicle,save_video) 
-            elseif isa(vehicle,'ArticulatedVehicle')
+            elseif or(isa(vehicle,'ArticulatedVehicle'),isa(vehicle,'ArticulatedVehicleCollapsed'))
                 obj.animation_articulatedVehicle(trajectoryx, vehicle,save_video) 
             end            
         end     

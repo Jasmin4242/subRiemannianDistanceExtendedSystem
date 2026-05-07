@@ -10,8 +10,9 @@ store_git_info = 0;
 save_video = 0;
 
 % choose the vehicle
+vehicle = ArticulatedVehicleCollapsed('artVeh');
 % vehicle = ArticulatedVehicle('artVeh');
-vehicle = Trailer('trailer');
+% vehicle = Trailer('trailer');
 % vehicle = Robot('DIANA');
 
 % choose the model
@@ -36,7 +37,17 @@ elseif isa(vehicle,'Trailer')
     end    
 elseif isa(vehicle,'ArticulatedVehicle')
     if startsWith(modelname, 'dynamics')
+        %x y theta gamma phi phi_t phi1_dot phi2_dot ODER
+        %x y theta gamma phi phi_t v omega 
         x0 = [-0.6; -0.75; 0; 0; 0; 0; 0.5; 0.5];
+    else
+        x0 = [-0.6; -0.75; 0; 0; 0; 0];
+    end    
+elseif isa(vehicle,'ArticulatedVehicleCollapsed')
+    if startsWith(modelname, 'dynamics')
+        %x y theta gamma phi phi_t phi1_dot gama_dot ODER
+        %x y theta gamma phi phi_t v gama_dot 
+        x0 = [-0.6; -0.75; 0; 0; 0; 0; 0.5; 0];
     else
         x0 = [-0.6; -0.75; 0; 0; 0; 0];
     end    
@@ -60,20 +71,20 @@ vehicle = vehicle.setModel(modelname);
 simulator = Simulator(vehicle.getModel(), dT);
 
 
-% %% open-loop simulation
-% % U_data = repmat([-0.00003 0.00003 0], 100, 1); %Roboter dreht nach links
-% % U_data = repmat([0 0 0.0001], 100, 1); %Gelenk wird aktuiert in positive Richtung
-% U_data = repmat([-0.00003 0.00003 -0.0001], 100, 1); %gegensätzliche Bewegung
-% u = Trajectoryu(dT, U_data,vehicle.getModel().inputNames, 0);
-% x = simulator.simulate(x0, u);
+%% open-loop simulation
+% U_data = repmat([0.00003 0], 100, 1);
+U_data = repmat([0 0.00005], 100, 1); %Gelenk wird aktuiert in positive Richtung
+% U_data = repmat([-0.00003 -0.0001], 100, 1); %gegensätzliche Bewegung
+u = Trajectoryu(dT, U_data,vehicle.getModel().inputNames, 0);
+x = simulator.simulate(x0, u);
 
 
-%% MPC
-horizon = 60;
-mpcController = MPCController(vehicle, dT, horizon);
-
-k_sim = 300;
-[x,u,cost] = simulator.sim_MPC_closedLoop(x0, k_sim,mpcController);
+% %% MPC
+% horizon = 60;
+% mpcController = MPCController(vehicle, dT, horizon);
+% 
+% k_sim = 300;
+% [x,u,cost] = simulator.sim_MPC_closedLoop(x0, k_sim,mpcController);
 
 %% postprocessing
 % VISUAlIZER
@@ -82,7 +93,7 @@ visualizer.animation(x, vehicle, save_video);
 visualizer.plotStates(x);
 visualizer.plotInputs(u);
 % visualizer.plotPath(x);
-visualizer.plotCosts(cost);  
+% visualizer.plotCosts(cost);  
 
 %% store results
 if save_results == 1    

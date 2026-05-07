@@ -3,7 +3,7 @@
 % mr, 3.11.2025
 
 
-function EqM_articulatedVehicle_oneWheel
+function EqM_articulatedVehicleCollapsed
 
 % generalized coordinates
 syms xc(t) yc(t) theta(t) phi1(t) xt(t) yt(t) phi1t(t) gama(t) % note that here plane=inertial frame (no tilted plane)
@@ -26,7 +26,7 @@ syms I_cx I_cy I_cz real;
 syms I_tx I_ty I_tz real;
 syms I_wx I_wy I_wz real;
 % applied forces and torques
-syms g tau_w1 tau_w2 tau_gama real
+syms g tau_w1 tau_gama real
 % u = [tau_w1; tau_w2];
 
 
@@ -411,7 +411,7 @@ disp('Scucessfully computed the kinematics for articulated vehicle with inputs v
 
 
 % store the handles
-save('results/EqM_articulatedVehicle.mat', 'M_eqM_func','M_eqM_func_vw','Minv_eqM_func','Minv_eqM_func_vw','q_eqM_func_vw','k_eqM_func', 'q_eqM_func','G_y_func','G_y_func_v_omega',...
+save('results/EqM_articulatedVehicleCollapsed.mat', 'M_eqM_func','M_eqM_func_vw','Minv_eqM_func','Minv_eqM_func_vw','q_eqM_func_vw','k_eqM_func', 'q_eqM_func','G_y_func','G_y_func_v_omega',...
     'G_y_subs_no_time_v_omega', 'G_y_subs_no_time', 'M_eqM_subs_no_time', 'k_eqM_subs_no_time', 'q_eqM_subs_no_time',...
     'y_','s_','x_','x_u_');
 disp('Scucessfully exported the equations of motion for articulated vehicle to function handles...');
