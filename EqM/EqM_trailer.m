@@ -220,7 +220,7 @@ function EqM_trailer
     A_Dphi_to_v = (1/R)*[1 -0.5*L; 1 0.5*L];
     %
     col_Dtheta1_v_omega = [sin(theta-theta1)/b1x 0];
-    col_Dtheta1_Dphi = col_Dtheta1_v_omega / (A_Dphi_to_v);
+    col_DthMeta1_Dphi = col_Dtheta1_v_omega / (A_Dphi_to_v);
     %
     col_Dphi1t_v_omega = [cos(theta-theta1)/R - Lt*sin(theta-theta1)/(2*b1x*R), 0];
     col_Dphi1t_Dphi = col_Dphi1t_v_omega / (A_Dphi_to_v);
@@ -485,6 +485,7 @@ function EqM_trailer
     % G_y_subs_no_time_v_omega = G_y_subs_no_time_v_omega; % do not consider wheel angle
     G_y_func_v_omega = matlabFunction(G_y_subs_no_time_v_omega, 'Vars', {y_});
     M_eqM_func_vw = matlabFunction(A_Dphi_to_v_val'*M_eqM_subs_no_time*A_Dphi_to_v_val, 'Vars', {y_});
+    % vpa(simplify(A_Dphi_to_v'*M_eqM*A_Dphi_to_v),2); %symbolisch
     Minv_eqM_func_vw = matlabFunction(inv(A_Dphi_to_v_val'*M_eqM_subs_no_time*A_Dphi_to_v_val), 'Vars', {y_});
     q_eqM_func_vw = matlabFunction(A_Dphi_to_v_val'*q_eqM_subs_no_time, 'Vars', {x_u_});
     
