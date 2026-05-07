@@ -12,6 +12,7 @@ n=4;
 %% Erstellen von X1 und X2
 l = sym('l','real');
 l_t=sym('l_t','real');
+R = sym('R','real');
 
 syms x1 x2 x3 x4;
 % x y theta gama
@@ -30,6 +31,21 @@ X2_1= 0;
 X2_2= 0;
 X2_3= l_t/(l_t + l*cos(x4));
 X2_4= 1;
+
+% %inputs phi_dot und gamma_dot
+% %Erstellen von X1
+% X1_1= R*cos(x3);
+% X1_2= R*sin(x3);
+% X1_3= R*sin(x4)/(l_t + l*cos(x4));
+% X1_4= 0;
+% 
+% X1_vorher=[X1_1;X1_2;X1_3;X1_4];
+% 
+% %Erstellen von X2
+% X2_1= 0;
+% X2_2= 0;
+% X2_3= l_t/(l_t + l*cos(x4));
+% X2_4= 1;
 
 X2_vorher=[X2_1;X2_2;X2_3;X2_4];
 

@@ -18,8 +18,8 @@ vehicle = ArticulatedVehicleCollapsed('artVeh');
 % choose the model
 % modelname = 'kinematics_vw';
 % modelname = 'kinematics_phidot';
-modelname = 'dynamics_phidot';
-% modelname = 'dynamics_vw';
+% modelname = 'dynamics_phidot';
+modelname = 'dynamics_vw';
 
 
 % choose the initial condition
@@ -47,7 +47,7 @@ elseif isa(vehicle,'ArticulatedVehicleCollapsed')
     if startsWith(modelname, 'dynamics')
         %x y theta gamma phi phi_t phi1_dot gama_dot ODER
         %x y theta gamma phi phi_t v gama_dot 
-        x0 = [-0.6; -0.75; 0; 0; 0; 0; 0.5; 0];
+        x0 = [-0.6; -0.75; 0; 0; 0; 0; 0; 0];
     else
         x0 = [-0.6; -0.75; 0; 0; 0; 0];
     end    
@@ -79,21 +79,21 @@ u = Trajectoryu(dT, U_data,vehicle.getModel().inputNames, 0);
 x = simulator.simulate(x0, u);
 
 
-% %% MPC
-% horizon = 60;
-% mpcController = MPCController(vehicle, dT, horizon);
-% 
-% k_sim = 300;
-% [x,u,cost] = simulator.sim_MPC_closedLoop(x0, k_sim,mpcController);
+%% MPC
+horizon = 60;
+mpcController = MPCController(vehicle, dT, horizon);
 
-%% postprocessing
-% VISUAlIZER
+k_sim = 150;
+[x,u,cost] = simulator.sim_MPC_closedLoop(x0, k_sim,mpcController);
+
+% %% postprocessing
+% % VISUAlIZER
 visualizer = Visualizer();
 visualizer.animation(x, vehicle, save_video);
 visualizer.plotStates(x);
 visualizer.plotInputs(u);
+visualizer.plotCosts(cost);  
 % visualizer.plotPath(x);
-% visualizer.plotCosts(cost);  
 
 %% store results
 if save_results == 1    

@@ -18,24 +18,24 @@ classdef ArticulatedVehicleCollapsed
 
             % Map für Modelle
             obj.AvailableModels = containers.Map('KeyType', 'char', 'ValueType', 'any');
-        
-            % Modelle hinzufügen
-            obj = obj.initializeModels();
-        
-            % Standardmodell setzen
-            modelNames = keys(obj.AvailableModels);
-            obj.ActiveModelName = modelNames{1};
             
             data_config = load('EqM/results/config.mat');
             obj.axisLength = data_config.L_val;
             obj.axisLengthTrailer = data_config.Lt_val;
             obj.l = data_config.l_val;
             obj.l_t = data_config.l_t_val;
+
+            % Modelle hinzufügen
+            obj = obj.initializeModels();
+        
+            % Standardmodell setzen
+            modelNames = keys(obj.AvailableModels);
+            obj.ActiveModelName = modelNames{1};
         end
 
         function obj = initializeModels(obj)
             data = load('EqM/results/EqM_articulatedVehicleCollapsed.mat');
-            data_config = load('EqM/results/config.mat');
+            data_config = load('EqM/results/config.mat'); %!!! muss zu EqM passen!
             b1x = data_config.b1x_val;
             
             %% Kinematics
@@ -48,16 +48,18 @@ classdef ArticulatedVehicleCollapsed
             nu = 2;
             constraints = ConstraintSet(obj, nx, nu, uMin, uMax);
             costParams = [];
-            % costParams.z = [1 0 0 0 0 0;... %x1=z1
-            %                 0 0 1 0 0 0;... %x3=z2
-            %                 0 1 0 0 0 0;... %x2=z3
-            %                 0 b1x 0 -b1x^2 0 0;...%x2-x4=z4
-            %                 zeros(1,6);...
-            %                 zeros(1,6)];          
-            % costParams.q_z = [0.1 0.1 5 5 0 0]';
-            % costParams.q_u = [0.125 0.0125];
-            % costParams.r = [1 1 2 3 1 1];  
-            % costParams.d = prod(costParams.r);
+            l = obj.l;
+            l_t = obj.l_t;
+            costParams.z = [1 0         0               0     0 0;... %x1=z1
+                            0 0         0               1     0 0;... %x4=z2
+                            0 0         -(l + l_t)      l_t   0 0;... %l_t*x4 - x3*(l + l_t)=z3
+                            0 (l + l_t) -l_t*(l + l_t)  l_t^2 0 0;...%x2*(l + l_t) + l_t^2*x4 - l_t*x3*(l + l_t)=z4
+                            zeros(1,6);...
+                            zeros(1,6)];          
+            costParams.q_z = [0.1 0.1 5 5 0 0]';
+            costParams.q_u = [0.125 0.0125];
+            costParams.r = [1 1 2 3 1 1];  
+            costParams.d = prod(costParams.r);
             kinematics_vw = Model('kinematics_vw', f, constraints, costParams,nx,nu, stateNames, inputNames);
             
             stateNames = ["x" "y" "theta" "gamma" "phi_l" "phi_1_t"];
@@ -89,7 +91,7 @@ classdef ArticulatedVehicleCollapsed
             uMax = 0.02*ones(2,1);
             uMin = -uMax;
             nx = 8;
-            nu = 3;
+            nu = 2;
             constraints = ConstraintSet(obj, nx, nu, uMin, uMax);
             costParams = [];
             % costParams.z = [1 0 0 0 0 0 0 0;...
@@ -113,21 +115,23 @@ classdef ArticulatedVehicleCollapsed
             uMax = 0.005*ones(2,1);
             uMin = -uMax;
             nx = 8;
-            nu = 3;
+            nu = 2;
             constraints = ConstraintSet(obj, nx, nu, uMin, uMax);
             costParams = [];
-            % costParams.z = [1 0 0 0 0 0 0 0;...
-            %                 0 0 1 0 0 0 0 0;...
-            %                 0 1 0 0 0 0 0 0;...
-            %                 0 b1x 0 -b1x^2 0 0 0 0;...
-            %                 zeros(1,8);...
-            %                 zeros(1,8);...
-            %                 0 0 0 0 0 0 1 0;...
-            %                 0 0 0 0 0 0 0 1];
-            % costParams.q_z = [0.1 0.1 5 5 0 0 0.125*ones(1,2)]';
-            % costParams.q_u = 1*ones(2,1);
-            % costParams.r = [1 1 2 3 1 1 1 1];
-            % costParams.d = prod(costParams.r);
+            l = obj.l;
+            l_t = obj.l_t;
+            costParams.z = [1 0         0               0     0 0 0 0;... %x1=z1
+                            0 0         0               1     0 0 0 0;... %x4=z2
+                            0 0         -(l + l_t)      l_t   0 0 0 0;... %l_t*x4 - x3*(l + l_t)=z3
+                            0 (l + l_t) -l_t*(l + l_t)  l_t^2 0 0 0 0;...%x2*(l + l_t) + l_t^2*x4 - l_t*x3*(l + l_t)=z4
+                            zeros(1,8);...
+                            zeros(1,8);...
+                            0 0 0 0 0 0 1 0;...
+                            0 0 0 0 0 0 0 1];
+            costParams.q_z = [0.1 0.1 5 5 0 0 0.125*ones(1,2)]';
+            costParams.q_u = 1*ones(2,1);
+            costParams.r = [1 1 2 3 1 1 1 1];
+            costParams.d = prod(costParams.r);
             dynamics_vw = Model('dynamics_vw', f, constraints, costParams,nx,nu, stateNames, inputNames);
        
             % available models
