@@ -283,7 +283,7 @@ Z1Z2z4_p =  get_YiYjyk_p(vektorfeld_rechts,vektorfeld_links,koordinate_nummer,z,
 %Z1Z2z3(p)
 vektorfeld_rechts=Z1;
 vektorfeld_links=Z2;
-Z2Z1z4_p =  get_YiYjyk_p(vektorfeld_rechts,vektorfeld_links,koordinate_nummer,z,p,n); %=-1
+Z2Z1z4_p =  get_YiYjyk_p(vektorfeld_rechts,vektorfeld_links,koordinate_nummer,z,p,n); %=0
 %Z2Z2z3(p)
 vektorfeld_rechts=Z2;
 vektorfeld_links=Z2;
