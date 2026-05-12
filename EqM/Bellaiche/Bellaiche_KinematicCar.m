@@ -107,14 +107,14 @@ X4_y=subs(X4,[x1 x2 x3 x4],[x_von_y.x1 x_von_y.x2 x_von_y.x3 x_von_y.x4]);
 syms Y1 Y2
 Y1=sym(zeros(n,1));
 Y2=sym(zeros(n,1));
-for ii=1:n
-    y_zeile=y_von_x(ii);
-    %jetzt die Abletung von y_zeile berechnen und damit die Einträge von Y1 und Y2 erhalten:
-    Y1_zeile=subs(y_zeile,[x1 x2 x3 x4],[X1_y(1) X1_y(2) X1_y(3) X1_y(4)]); 
-    Y2_zeile=subs(y_zeile,[x1 x2 x3 x4],[X2_y(1) X2_y(2) X2_y(3) X2_y(4)]);
-    Y1(ii,1)=Y1_zeile;
-    Y2(ii,1)=Y2_zeile;
-end
+
+DyDx = jacobian(y_von_x, [x1 x2 x3 x4]);
+Y1_x = simplify(DyDx * X1);
+Y2_x = simplify(DyDx * X2);
+x_von_y_vec = y_von_x';
+
+Y1 = simplify(subs(Y1_x, [x1 x2 x3 x4], x_von_y_vec));
+Y2 = simplify(subs(Y2_x, [x1 x2 x3 x4], x_von_y_vec));
 
 %Bestimmung von Y3 Y4 Y5 Y6
 %X3=[X1,X2]
@@ -194,14 +194,14 @@ X4_z=subs(X4,[x1 x2 x3 x4],[x_von_z.x1 x_von_z.x2 x_von_z.x3 x_von_z.x4]);
 syms Z1 Z2
 Z1=sym(zeros(n,1));
 Z2=sym(zeros(n,1));
-for ii=1:n
-    z_zeile=z_von_x(ii); %Produktregel?! Z1 und Z2 stimmen nicht!
-    %jetzt die Abletung von z_zeile berechnen und damit die Einträge von Y1 und Y2 erhalten:
-    Z1_zeile=subs(z_zeile,[x1 x2 x3 x4],[X1_z(1) X1_z(2) X1_z(3) X1_z(4)]); 
-    Z2_zeile=subs(z_zeile,[x1 x2 x3 x4],[X2_z(1) X2_z(2) X2_z(3) X2_z(4)]);
-    Z1(ii,1)=Z1_zeile;
-    Z2(ii,1)=Z2_zeile;
-end
+
+DzDx = jacobian(z_von_x, [x1 x2 x3 x4]);
+Z1_x = simplify(DzDx * X1);
+Z2_x = simplify(DzDx * X2);
+x_von_z_vec = [x_von_z.x1 x_von_z.x2 x_von_z.x3 x_von_z.x4];
+
+Z1 = simplify(subs(Z1_x, [x1 x2 x3 x4], x_von_z_vec));
+Z2 = simplify(subs(Z2_x, [x1 x2 x3 x4], x_von_z_vec));
 
 %Bestimmung von Z3 Z4 Z5 Z6
 %X3=[X1,X2]
@@ -283,7 +283,7 @@ Z1Z2z4_p =  get_YiYjyk_p(vektorfeld_rechts,vektorfeld_links,koordinate_nummer,z,
 %Z1Z2z3(p)
 vektorfeld_rechts=Z1;
 vektorfeld_links=Z2;
-Z2Z1z4_p =  get_YiYjyk_p(vektorfeld_rechts,vektorfeld_links,koordinate_nummer,z,p,n); %=-1
+Z2Z1z4_p =  get_YiYjyk_p(vektorfeld_rechts,vektorfeld_links,koordinate_nummer,z,p,n); %=0
 %Z2Z2z3(p)
 vektorfeld_rechts=Z2;
 vektorfeld_links=Z2;

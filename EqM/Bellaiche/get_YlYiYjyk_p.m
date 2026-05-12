@@ -23,4 +23,6 @@ function YlYiYjyk_p =  get_YlYiYjyk_p(vektorfeld_rechts,vektorfeld_links,vektorf
         
     YlYiYjyk_p=subs(ergebnis_schritt3,[y(1) y(2) y(3) y(4)],[p(1) p(2) p(3) p(4)]);
 
+    % simplify(ergebnis_schritt3)
+
 end

@@ -10,8 +10,10 @@ close all;
 n=4;
 
 %% Erstellen von X1 und X2
-l = sym('l','real');
-l_t=sym('l_t','real');
+% l = sym('l','real');
+% l_t=sym('l_t','real');
+l=1
+l_t=1
 R = sym('R','real');
 
 syms x1 x2 x3 x4;
@@ -118,14 +120,14 @@ X4_y=subs(X4,[x1 x2 x3 x4],[x_von_y.x1 x_von_y.x2 x_von_y.x3 x_von_y.x4]);
 syms Y1 Y2
 Y1=sym(zeros(n,1));
 Y2=sym(zeros(n,1));
-for ii=1:n
-    y_zeile=y_von_x(ii);
-    %jetzt die Abletung von y_zeile berechnen und damit die Einträge von Y1 und Y2 erhalten:
-    Y1_zeile=subs(y_zeile,[x1 x2 x3 x4],[X1_y(1) X1_y(2) X1_y(3) X1_y(4)]); 
-    Y2_zeile=subs(y_zeile,[x1 x2 x3 x4],[X2_y(1) X2_y(2) X2_y(3) X2_y(4)]);
-    Y1(ii,1)=Y1_zeile;
-    Y2(ii,1)=Y2_zeile;
-end
+
+DyDx = jacobian(y_von_x, [x1 x2 x3 x4]);
+Y1_x = simplify(DyDx * X1);
+Y2_x = simplify(DyDx * X2);
+x_von_y_vec = y_von_x';
+
+Y1 = simplify(subs(Y1_x, [x1 x2 x3 x4], x_von_y_vec));
+Y2 = simplify(subs(Y2_x, [x1 x2 x3 x4], x_von_y_vec));
 
 %Bestimmung von Y3 Y4 Y5 Y6
 %X3=[X1,X2]
@@ -205,14 +207,14 @@ X4_z=subs(X4,[x1 x2 x3 x4],[x_von_z.x1 x_von_z.x2 x_von_z.x3 x_von_z.x4]);
 syms Z1 Z2
 Z1=sym(zeros(n,1));
 Z2=sym(zeros(n,1));
-for ii=1:n
-    z_zeile=z_von_x(ii); %Produktregel?! Z1 und Z2 stimmen nicht!
-    %jetzt die Abletung von z_zeile berechnen und damit die Einträge von Y1 und Y2 erhalten:
-    Z1_zeile=subs(z_zeile,[x1 x2 x3 x4],[X1_z(1) X1_z(2) X1_z(3) X1_z(4)]); 
-    Z2_zeile=subs(z_zeile,[x1 x2 x3 x4],[X2_z(1) X2_z(2) X2_z(3) X2_z(4)]);
-    Z1(ii,1)=Z1_zeile;
-    Z2(ii,1)=Z2_zeile;
-end
+
+DzDx = jacobian(z_von_x, [x1 x2 x3 x4]);
+Z1_x = simplify(DzDx * X1);
+Z2_x = simplify(DzDx * X2);
+x_von_z_vec = [x_von_z.x1 x_von_z.x2 x_von_z.x3 x_von_z.x4];
+
+Z1 = simplify(subs(Z1_x, [x1 x2 x3 x4], x_von_z_vec));
+Z2 = simplify(subs(Z2_x, [x1 x2 x3 x4], x_von_z_vec));
 
 %Bestimmung von Z3 Z4 Z5 Z6
 %X3=[X1,X2]
@@ -236,7 +238,7 @@ koordinate_nummer=1; %z1
 %z1(p)=0 --> z1>=1
 %Z1z1(p),Z2z1(p)
 vektorfeld_rechts=Z1;
-Z1z1_p =  get_Yjyk_p(vektorfeld_rechts,koordinate_nummer,z,p); %=1 daher Ordnung 1
+Z1z1_p =  get_Yjyk_p(vektorfeld_rechts,koordinate_nummer,z,p); %=1
 
 %Ordnung von z2
 koordinate_nummer=2; %z2
@@ -271,7 +273,7 @@ Z2Z1z3_p =  get_YiYjyk_p(vektorfeld_rechts,vektorfeld_links,koordinate_nummer,z,
 %Z2Z2z3(p)
 vektorfeld_rechts=Z2;
 vektorfeld_links=Z2;
-Z2Z2z3_p =  get_YiYjyk_p(vektorfeld_rechts,vektorfeld_links,koordinate_nummer,z,p,n); %
+Z2Z2z3_p =  get_YiYjyk_p(vektorfeld_rechts,vektorfeld_links,koordinate_nummer,z,p,n); %0
 
 
 %Ordnung von z4
@@ -347,3 +349,4 @@ Z6_n=Z6_n(:,2); %Nullvektor
 alpha=sym('alpha','real');
 term_in_R4=sin(alpha*z2)-sin(alpha*z2+alpha^2*z3+alpha^3*z4)+alpha^2*z3;
 Zterm_in_R4_taylor=taylor(term_in_R4,[z1 z2 z3 z4],[0 0 0 0],'Order', 4);
+
