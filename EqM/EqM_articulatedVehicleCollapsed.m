@@ -64,7 +64,7 @@ T_tW1toC = utils.CoTrafo.homog_trafo(eye(3), t_tW1toC_inC)*utils.CoTrafo.homog_t
 % wheels depicted in robot frame (C)
 p_w1_C = formula(T_W1toC*[zeros(3,1);1]); % homogeneous coordinates; formula renders symfun as vector to access entries via brackets
 r_w1_C = p_w1_C(1:3); % homogeneous coordinates; 
-% trailer depicted in robot frame
+% trailer depicted in grobot frame
 p_t_C = formula(T_TtoC*[zeros(3,1);1]);
 r_t_C = p_t_C(1:3);
 p_tw1_C = formula(T_tW1toC*[zeros(3,1);1]);

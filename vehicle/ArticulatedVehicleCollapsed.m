@@ -129,6 +129,7 @@ classdef ArticulatedVehicleCollapsed
                             0 0 0 0 0 0 1 0;...
                             0 0 0 0 0 0 0 1];
             costParams.q_z = [0.1 0.1 5 5 0 0 0.125*ones(1,2)]';
+            % costParams.q_z = ones(8,1);
             costParams.q_u = 1*ones(2,1);
             costParams.r = [1 1 2 3 1 1 1 1];
             costParams.d = prod(costParams.r);

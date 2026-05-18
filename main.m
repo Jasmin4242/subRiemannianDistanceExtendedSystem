@@ -5,9 +5,9 @@ addpath(genpath(pwd));
 %% user params
 dT = 0.25;
 
-save_results = 0;
-store_git_info = 0;
-save_video = 0;
+save_results = 1;
+store_git_info = 1;
+save_video = 1;
 
 % choose the vehicle
 vehicle = ArticulatedVehicleCollapsed('artVeh');
@@ -80,10 +80,10 @@ x = simulator.simulate(x0, u);
 
 
 %% MPC
-horizon = 60;
+horizon = 100; %100
 mpcController = MPCController(vehicle, dT, horizon);
 
-k_sim = 150;
+k_sim = 200; %200
 [x,u,cost] = simulator.sim_MPC_closedLoop(x0, k_sim,mpcController);
 
 % %% postprocessing

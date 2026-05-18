@@ -84,6 +84,8 @@ X4=ad_fng(:,2);
 ad_fng=liebracket(X2,X3,x,1);
 X5=ad_fng(:,2);
 
+% simplify(det([X1 X2 X3 X4])) %for LARC
+
 %% liebrackets ebenso an p=zeros(6,1) auswerten
 X30=subs(X3,[x1 x2 x3 x4],[p(1) p(2) p(3) p(4)]);
 X40=subs(X4,[x1 x2 x3 x4],[p(1) p(2) p(3) p(4)]);
@@ -329,6 +331,11 @@ Z1_taylor_1=taylor(Z1(1),[z1 z2 z3 z4],[0 0 0 0],'Order', 4) %dann bis Terme hoc
 Z1_taylor_2=taylor(Z1(2),[z1 z2 z3 z4],[0 0 0 0],'Order', 4)
 Z1_taylor_3=taylor(Z1(3),[z1 z2 z3 z4],[0 0 0 0],'Order', 4)
 Z1_taylor_4=taylor(Z1(4),[z1 z2 z3 z4],[0 0 0 0],'Order', 4)
+
+Z2_taylor_1=taylor(Z2(1),[z1 z2 z3 z4],[0 0 0 0],'Order', 4) %dann bis Terme hoch 3
+Z2_taylor_2=taylor(Z2(2),[z1 z2 z3 z4],[0 0 0 0],'Order', 4)
+Z2_taylor_3=taylor(Z2(3),[z1 z2 z3 z4],[0 0 0 0],'Order', 4)
+Z2_taylor_4=taylor(Z2(4),[z1 z2 z3 z4],[0 0 0 0],'Order', 4)
 
 %% verify that it is truly nilpotent
 Z1_n=[1;0;-z2;-z3];
